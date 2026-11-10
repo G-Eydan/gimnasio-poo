@@ -37,3 +37,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+### Compilados (Plan Scrum 11.5) ###
+out/
+bin/
+*.class
+
+### IntelliJ: configuracion personal ###
+.idea/workspace.xml
