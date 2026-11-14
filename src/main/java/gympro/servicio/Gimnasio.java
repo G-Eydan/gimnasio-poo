@@ -1,5 +1,12 @@
 package gympro.servicio;
 
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+
 import gympro.excepciones.DatosInvalidosException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
@@ -10,13 +17,6 @@ import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.persona.Miembro;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-
 /**
  * Clase central (fachada) del sistema: guarda miembros, planes, membresías y pagos,
  * y aplica las reglas de negocio de contratación, renovación y vencimiento.
@@ -25,7 +25,6 @@ import java.util.HashMap;
  * parámetro (para poder probarlos con fechas fijas) y otra que usa
  * {@link LocalDate#now()}.</p>
  *
- * <p>Pendiente para otros sprints: entrenadores, rutinas y usuarios (S3).</p>
  *
  * @author I1
  */
@@ -249,7 +248,7 @@ public class Gimnasio implements Serializable {
     /**
      * Membresías vencidas, ordenadas por fecha de fin. Solo cuenta la última membresía de
      * cada miembro: si ya renovó, su membresía antigua no aparece como vencida.
-     * (I3 reemplazará el orden por {@code Ordenamiento.ordenarPorVencimiento}, inserción.)
+     * (Este orden se puede reemplazar por {@code Ordenamiento.ordenarPorVencimiento}, inserción.)
      */
     public ArrayList<Membresia> getMembresiasVencidas() {
         return getMembresiasVencidas(LocalDate.now());
