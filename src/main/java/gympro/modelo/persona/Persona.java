@@ -1,26 +1,38 @@
 package gympro.modelo.persona;
 
+import gympro.excepciones.DatosInvalidosException;
+import gympro.util.Validador;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Objects;
 
-public abstract class Persona
+public abstract class Persona implements Serializable
 {
+    private static final long serialVersionUID = 1L;
+
     protected String dni;
     protected String nombres;
     protected String apellidos;
     protected LocalDate fechaNacimiento;
-    protected String email;
     protected String telefono;
+    protected String email;
 
-    public Persona(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String email, String telefono)
+    // Constructor corto
+    public Persona(String dni, String nombres, String apellidos) throws DatosInvalidosException
     {
-        this.dni = dni;
-        this.nombres = nombres;
-        this.apellidos = apellidos;
+        this(dni, nombres, apellidos, null, null, null);
+    }
+
+    // Constructor largo (orden de la especificación: telefono antes que email)
+    public Persona(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email) throws DatosInvalidosException
+    {
+        setDni(dni);
+        setNombres(nombres);
+        setApellidos(apellidos);
         this.fechaNacimiento = fechaNacimiento;
-        this.email = email;
-        this.telefono = telefono;
+        if(telefono != null) setTelefono(telefono);
+        if(email != null) setEmail(email);
     }
 
     public String getNombreCompleto()
@@ -56,8 +68,9 @@ public abstract class Persona
         return dni;
     }
 
-    public void setDni(String dni)
+    public void setDni(String dni) throws DatosInvalidosException
     {
+        Validador.validarDni(dni);
         this.dni = dni;
     }
 
@@ -66,8 +79,10 @@ public abstract class Persona
         return nombres;
     }
 
-    public void setNombres(String nombres)
+    public void setNombres(String nombres) throws DatosInvalidosException
     {
+        if(nombres == null || nombres.trim().isEmpty())
+            throw new DatosInvalidosException("Los nombres no pueden estar vacíos.");
         this.nombres = nombres;
     }
 
@@ -76,8 +91,10 @@ public abstract class Persona
         return apellidos;
     }
 
-    public void setApellidos(String apellidos)
+    public void setApellidos(String apellidos) throws DatosInvalidosException
     {
+        if(apellidos == null || apellidos.trim().isEmpty())
+            throw new DatosInvalidosException("Los apellidos no pueden estar vacíos.");
         this.apellidos = apellidos;
     }
 
@@ -91,23 +108,25 @@ public abstract class Persona
         this.fechaNacimiento = fechaNacimiento;
     }
 
-    public String getEmail()
-    {
-        return email;
-    }
-
-    public void setEmail(String email)
-    {
-        this.email = email;
-    }
-
     public String getTelefono()
     {
         return telefono;
     }
 
-    public void setTelefono(String telefono)
+    public void setTelefono(String telefono) throws DatosInvalidosException
     {
+        Validador.validarTelefono(telefono);
         this.telefono = telefono;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public void setEmail(String email) throws DatosInvalidosException
+    {
+        Validador.validarEmail(email);
+        this.email = email;
     }
 }

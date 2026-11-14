@@ -1,5 +1,6 @@
 package gympro.modelo.persona;
 
+import gympro.excepciones.DatosInvalidosException;
 import gympro.modelo.enums.EstadoInscripcion;
 import gympro.modelo.membresia.Membresia;
 import java.time.LocalDate;
@@ -7,15 +8,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Miembro extends Persona implements Comparable<Miembro>
+public abstract class Miembro extends Persona implements Descontable, Comparable<Miembro>
 {
-    private String codigo;
-    private List<Membresia> historialMembresias = new ArrayList<>();
+    private static final long serialVersionUID = 1L;
+    private static int contador = 0;
 
-    public Miembro(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String email, String telefono, String codigo)
+    private final String codigo;
+    private List<Membresia> historialMembresias = new ArrayList<>();
+    // Sprint 2: peso, altura, entrenador e historial de rutinas
+
+    public Miembro(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email) throws DatosInvalidosException
     {
-        super(dni, nombres, apellidos, fechaNacimiento, email, telefono);
-        this.codigo = codigo;
+        super(dni, nombres, apellidos, fechaNacimiento, telefono, email);
+        this.codigo = String.format("M%04d", ++contador);
     }
 
     @Override
@@ -23,6 +28,8 @@ public class Miembro extends Persona implements Comparable<Miembro>
     {
         return "MIEMBRO";
     }
+
+    public abstract String getTipo();
 
     public void agregarMembresia(Membresia m)
     {
@@ -38,6 +45,23 @@ public class Miembro extends Persona implements Comparable<Miembro>
     {
         if(historialMembresias.isEmpty()) return null;
         return historialMembresias.get(historialMembresias.size() - 1);
+    }
+
+    /**
+     * @return true si aún no tiene ninguna membresía registrada
+     */
+    public boolean esPrimeraMembresia()
+    {
+        return historialMembresias.isEmpty();
+    }
+
+    /**
+     * IMC = peso (kg) / altura² (m). Peso y altura pasan a ser atributos en el Sprint 2.
+     */
+    public double calcularIMC(double pesoKg, double alturaM)
+    {
+        if(pesoKg <= 0 || alturaM <= 0) throw new IllegalArgumentException("Peso y altura deben ser positivos");
+        return pesoKg / (alturaM * alturaM);
     }
 
     public long getDiasRestantes()
@@ -72,14 +96,16 @@ public class Miembro extends Persona implements Comparable<Miembro>
         return codigo;
     }
 
-    public void setCodigo(String codigo)
-    {
-        this.codigo = codigo;
-    }
-
+    /**
+     * Orden natural: apellidos, luego nombres, y DNI como desempate.
+     */
     @Override
     public int compareTo(Miembro otro)
     {
-        return this.dni.compareTo(otro.getDni()); // Ordenamiento natural por DNI
+        int r = this.apellidos.compareToIgnoreCase(otro.apellidos);
+        if(r != 0) return r;
+        r = this.nombres.compareToIgnoreCase(otro.nombres);
+        if(r != 0) return r;
+        return this.dni.compareTo(otro.dni);
     }
 }

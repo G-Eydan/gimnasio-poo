@@ -1,11 +1,13 @@
 package gympro.modelo.entrenamiento;
 
+import gympro.modelo.enums.GrupoMuscular;
+
 public class Ejercicio
 {
     private String nombre;
-    private String grupoMuscular;
+    private GrupoMuscular grupoMuscular;
 
-    public Ejercicio(String nombre, String grupoMuscular)
+    public Ejercicio(String nombre, GrupoMuscular grupoMuscular)
     {
         this.nombre = nombre;
         this.grupoMuscular = grupoMuscular;
@@ -21,12 +23,12 @@ public class Ejercicio
         this.nombre = nombre;
     }
 
-    public String getGrupoMuscular()
+    public GrupoMuscular getGrupoMuscular()
     {
         return grupoMuscular;
     }
 
-    public void setGrupoMuscular(String grupoMuscular)
+    public void setGrupoMuscular(GrupoMuscular grupoMuscular)
     {
         this.grupoMuscular = grupoMuscular;
     }

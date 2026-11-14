@@ -1,17 +1,26 @@
 package gympro.modelo.persona;
 
+import gympro.excepciones.DatosInvalidosException;
 import java.time.LocalDate;
 
-public class MiembroRegular extends Miembro implements Comparable<Miembro>
+public class MiembroRegular extends Miembro
 {
-    public MiembroRegular(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String email, String telefono, String codigo)
+    private static final long serialVersionUID = 1L;
+
+    public MiembroRegular(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email) throws DatosInvalidosException
     {
-        super(dni, nombres, apellidos, fechaNacimiento, email, telefono, codigo);
+        super(dni, nombres, apellidos, fechaNacimiento, telefono, email);
     }
 
     @Override
-    public int compareTo(Miembro otro)
+    public String getTipo()
     {
-        return this.dni.compareTo(otro.getDni());
+        return "REGULAR";
+    }
+
+    @Override
+    public double getPorcentajeDescuento()
+    {
+        return 0.0;
     }
 }
