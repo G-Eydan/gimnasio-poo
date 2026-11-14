@@ -1,5 +1,7 @@
 package gympro.util;
 
+import gympro.excepciones.DatosInvalidosException;
+
 public class Validador
 {
     public static void validarDni(String dni) throws DatosInvalidosException
