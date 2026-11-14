@@ -10,6 +10,11 @@ public class MiembroEstudiante extends Miembro
     private String universidad;
     private String codigoUniversitario;
 
+    public MiembroEstudiante(String dni, String nombres, String apellidos) throws DatosInvalidosException
+    {
+        super(dni, nombres, apellidos);
+    }
+
     public MiembroEstudiante(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email,
                              String universidad, String codigoUniversitario) throws DatosInvalidosException
     {
