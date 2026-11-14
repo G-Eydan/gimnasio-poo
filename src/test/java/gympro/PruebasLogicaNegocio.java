@@ -64,9 +64,9 @@ public class PruebasLogicaNegocio {
         g.crearPlan(new PlanMensual("PM", 120));
         g.crearPlan(new PlanTrimestral("PT", 120));
         g.crearPlan(new PlanAnual("PA", 120));
-        g.registrarMiembro(new MiembroRegular("70000001", "Luis", "Perez Rojas"));
-        g.registrarMiembro(new MiembroEstudiante("70000002", "Ana", "Quispe Mamani"));
-        g.registrarMiembro(new MiembroCorporativo("70000003", "Carlos", "Flores Vega"));
+        g.registrarMiembro(new MiembroRegular("70000001", "Luis", "Perez Rojas", null, null, null));
+        g.registrarMiembro(new MiembroEstudiante("70000002", "Ana", "Quispe Mamani", null, null, null, null, null));
+        g.registrarMiembro(new MiembroCorporativo("70000003", "Carlos", "Flores Vega", null, null, null, null, null));
         return g;
     }
 
@@ -208,9 +208,9 @@ public class PruebasLogicaNegocio {
         System.out.println("HU-01 - Miembros y planes en el gimnasio");
         Gimnasio g = nuevoGimnasio();
         esperarExcepcion("CP-01 DNI de 4 dígitos", DatosInvalidosException.class,
-                () -> g.registrarMiembro(new MiembroRegular("1234", "Corto", "Dni")));
+                () -> g.registrarMiembro(new MiembroRegular("1234", "Corto", "Dni", null, null, null)));
         esperarExcepcion("CP-02 DNI duplicado", DatosInvalidosException.class,
-                () -> g.registrarMiembro(new MiembroRegular("70000001", "Otro", "Distinto")));
+                () -> g.registrarMiembro(new MiembroRegular("70000001", "Otro", "Distinto", null, null, null)));
         esperarExcepcion("Buscar DNI inexistente", MiembroNoEncontradoException.class,
                 () -> g.buscarMiembro("11111111"));
         verificar("Buscar por nombres y apellidos",
