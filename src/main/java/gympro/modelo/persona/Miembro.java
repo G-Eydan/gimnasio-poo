@@ -17,6 +17,12 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     private List<Membresia> historialMembresias = new ArrayList<>();
     // Sprint 2: peso, altura, entrenador e historial de rutinas
 
+    public Miembro(String dni, String nombres, String apellidos) throws DatosInvalidosException
+    {
+        super(dni, nombres, apellidos);
+        this.codigo = String.format("M%04d", ++contador);
+    }
+
     public Miembro(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email) throws DatosInvalidosException
     {
         super(dni, nombres, apellidos, fechaNacimiento, telefono, email);
@@ -47,9 +53,7 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
         return historialMembresias.get(historialMembresias.size() - 1);
     }
 
-    /**
-     * @return true si aún no tiene ninguna membresía registrada
-     */
+    /** @return true si aún no tiene ninguna membresía registrada */
     public boolean esPrimeraMembresia()
     {
         return historialMembresias.isEmpty();
@@ -60,7 +64,8 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
      */
     public double calcularIMC(double pesoKg, double alturaM)
     {
-        if(pesoKg <= 0 || alturaM <= 0) throw new IllegalArgumentException("Peso y altura deben ser positivos");
+        if(pesoKg <= 0 || alturaM <= 0)
+            throw new IllegalArgumentException("Peso y altura deben ser positivos");
         return pesoKg / (alturaM * alturaM);
     }
 
@@ -96,9 +101,7 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
         return codigo;
     }
 
-    /**
-     * Orden natural: apellidos, luego nombres, y DNI como desempate.
-     */
+    /** Orden natural: apellidos, luego nombres, y DNI como desempate. */
     @Override
     public int compareTo(Miembro otro)
     {

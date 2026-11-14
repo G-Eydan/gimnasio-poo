@@ -7,6 +7,11 @@ public class MiembroRegular extends Miembro
 {
     private static final long serialVersionUID = 1L;
 
+    public MiembroRegular(String dni, String nombres, String apellidos) throws DatosInvalidosException
+    {
+        super(dni, nombres, apellidos);
+    }
+
     public MiembroRegular(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email) throws DatosInvalidosException
     {
         super(dni, nombres, apellidos, fechaNacimiento, telefono, email);

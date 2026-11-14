@@ -10,6 +10,11 @@ public class MiembroCorporativo extends Miembro
     private String empresa;
     private String ruc;
 
+    public MiembroCorporativo(String dni, String nombres, String apellidos) throws DatosInvalidosException
+    {
+        super(dni, nombres, apellidos);
+    }
+
     public MiembroCorporativo(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email,
                               String empresa, String ruc) throws DatosInvalidosException
     {
