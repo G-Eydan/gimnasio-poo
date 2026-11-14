@@ -3,6 +3,11 @@ package gympro.modelo.persona;
 import gympro.excepciones.DatosInvalidosException;
 import java.time.LocalDate;
 
+/**
+ * Miembro estudiante: 15 % de descuento (RN-02). Registra su universidad y código universitario.
+ *
+ * @author I3
+ */
 public class MiembroEstudiante extends Miembro
 {
     private static final long serialVersionUID = 1L;

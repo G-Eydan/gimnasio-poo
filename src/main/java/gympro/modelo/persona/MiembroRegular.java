@@ -3,6 +3,11 @@ package gympro.modelo.persona;
 import gympro.excepciones.DatosInvalidosException;
 import java.time.LocalDate;
 
+/**
+ * Miembro regular: sin descuento.
+ *
+ * @author I3
+ */
 public class MiembroRegular extends Miembro
 {
     private static final long serialVersionUID = 1L;
