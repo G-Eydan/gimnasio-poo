@@ -3,6 +3,11 @@ package gympro.modelo.persona;
 import gympro.excepciones.DatosInvalidosException;
 import java.time.LocalDate;
 
+/**
+ * Miembro corporativo: 20 % de descuento (RN-02). Registra su empresa y RUC.
+ *
+ * @author I3
+ */
 public class MiembroCorporativo extends Miembro
 {
     private static final long serialVersionUID = 1L;
