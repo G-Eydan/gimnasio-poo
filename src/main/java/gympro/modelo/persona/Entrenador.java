@@ -1,34 +1,23 @@
 package gympro.modelo.persona;
 
+import java.time.LocalDate;
+
 public class Entrenador extends Persona
 {
-    private String turno;
-    private int cupoMaximo;
+    private String especialidad;
+    private static final int MAX_MIEMBROS = 10;
+    private boolean[][] disponibilidad; // [7 días][3 turnos]
 
-    public Entrenador(String dni, String nombre, String email, String telefono, String turno, int cupoMaximo)
+    public Entrenador(String dni, String nombres, String apellidos, LocalDate fechaNacimiento, String email, String telefono, String especialidad)
     {
-        super(dni, nombre, email, telefono);
-        this.turno = turno;
-        this.cupoMaximo = cupoMaximo;
+        super(dni, nombres, apellidos, fechaNacimiento, email, telefono);
+        this.especialidad = especialidad;
+        this.disponibilidad = new boolean[7][3];
     }
 
-    public String getTurno()
+    @Override
+    public String getRol()
     {
-        return turno;
-    }
-
-    public void setTurno(String turno)
-    {
-        this.turno = turno;
-    }
-
-    public int getCupoMaximo()
-    {
-        return cupoMaximo;
-    }
-
-    public void setCupoMaximo(int cupoMaximo)
-    {
-        this.cupoMaximo = cupoMaximo;
+        return "ENTRENADOR";
     }
 }

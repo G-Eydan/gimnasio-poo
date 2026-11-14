@@ -1,37 +1,59 @@
 package gympro.modelo.entrenamiento;
 
-import java.util.ArrayList;
-import java.util.List;
+import gympro.modelo.enums.Objetivo;
 
 public class Rutina
 {
-    private String nombre;
-    private String objetivo;
-    private List<DetalleRutina> detalles = new ArrayList<>();
+    private String codigo;
+    private Objetivo objetivo;
+    private DetalleRutina[] detalles; // Arreglo fijo de tamaño predefinido
+    private int n; // Contador actual de elementos en el arreglo
 
-    public Rutina(String nombre, String objetivo)
+    public Rutina(String codigo, Objetivo objetivo, int capacidadMaxima)
     {
-        this.nombre = nombre;
+        this.codigo = codigo;
         this.objetivo = objetivo;
+        this.detalles = new DetalleRutina[capacidadMaxima];
+        this.n = 0;
     }
 
-    public void agregarDetalle(DetalleRutina detalle)
+    public boolean agregarDetalle(DetalleRutina detalle)
     {
-        this.detalles.add(detalle);
+        if(n < detalles.length)
+        {
+            detalles[n++] = detalle;
+            return true;
+        }
+        return false; // Rutina llena
     }
 
-    public String getNombre()
+    public String getCodigo()
     {
-        return nombre;
+        return codigo;
     }
 
-    public String getObjetivo()
+    public void setCodigo(String codigo)
+    {
+        this.codigo = codigo;
+    }
+
+    public Objetivo getObjetivo()
     {
         return objetivo;
     }
 
-    public List<DetalleRutina> getDetalles()
+    public void setObjetivo(Objetivo objetivo)
+    {
+        this.objetivo = objetivo;
+    }
+
+    public DetalleRutina[] getDetalles()
     {
         return detalles;
+    }
+
+    public int getN()
+    {
+        return n;
     }
 }
