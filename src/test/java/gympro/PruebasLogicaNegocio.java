@@ -22,9 +22,9 @@ import java.util.ArrayList;
 
 /**
  * Pruebas de la lógica de negocio de I1 (sin JUnit, para que corran con solo Java).
- * Cubren HU-04 y los casos CP-03 a CP-09 de la especificación.
+ * Cubren HU-04 y los casos CP-01 a CP-09 de la especificación.
  *
- * Se ejecuta con: java gympro.PruebasLogicaNegocio
+ * Se ejecuta como cualquier clase con main (en IntelliJ: clic derecho, Run).
  */
 public class PruebasLogicaNegocio {
 
@@ -207,7 +207,9 @@ public class PruebasLogicaNegocio {
     private static void pruebaMiembrosYPlanes() throws Exception {
         System.out.println("HU-01 - Miembros y planes en el gimnasio");
         Gimnasio g = nuevoGimnasio();
-        esperarExcepcion("Registrar DNI duplicado", DatosInvalidosException.class,
+        esperarExcepcion("CP-01 DNI de 4 dígitos", DatosInvalidosException.class,
+                () -> g.registrarMiembro(new MiembroRegular("1234", "Corto", "Dni")));
+        esperarExcepcion("CP-02 DNI duplicado", DatosInvalidosException.class,
                 () -> g.registrarMiembro(new MiembroRegular("70000001", "Otro", "Distinto")));
         esperarExcepcion("Buscar DNI inexistente", MiembroNoEncontradoException.class,
                 () -> g.buscarMiembro("11111111"));

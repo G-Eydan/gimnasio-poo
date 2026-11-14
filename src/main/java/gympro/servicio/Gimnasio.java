@@ -16,6 +16,7 @@ import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.persona.Miembro;
+import gympro.util.Validador;
 
 /**
  * Clase central (fachada) del sistema: guarda miembros, planes, membresías y pagos,
@@ -64,12 +65,13 @@ public class Gimnasio implements Serializable {
     /**
      * Registra un miembro nuevo.
      *
-     * @throws DatosInvalidosException si el miembro es nulo o el DNI ya existe
+     * @throws DatosInvalidosException si el miembro es nulo, el DNI no tiene 8 dígitos o ya existe
      */
     public void registrarMiembro(Miembro miembro) throws DatosInvalidosException {
         if (miembro == null) {
             throw new DatosInvalidosException("El miembro no puede ser nulo.");
         }
+        Validador.validarDni(miembro.getDni());
         if (miembros.containsKey(miembro.getDni())) {
             throw new DatosInvalidosException("DNI duplicado: " + miembro.getDni());
         }
