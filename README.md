@@ -83,7 +83,7 @@ Ejemplo de recorrido (demo del Sprint 1):
 2. **Opción 5**: muestra los importes S/ 120.00, S/ 324.00 y S/ 1152.00.
 3. **Opción 1** para registrar un miembro de cada tipo. DNI de 8 dígitos, teléfono de 9 dígitos y email con `@`; la fecha de nacimiento (`dd/mm/aaaa`) es opcional.
 4. **Opción 1** con DNI `1234`: se muestra el mensaje de error y el menú continúa.
-5. **Opción 2** con un DNI registrado: muestra código, datos, tipo, descuento y estado.
+5. **Opción 2** con un DNI registrado: muestra la ficha del miembro (código, datos, tipo, descuento, estado de inscripción, fecha de vencimiento, días restantes e historial de membresías).
 6. **Opción 3**: lista los miembros ordenados por apellido.
 
 Contratar y renovar (Sprint 2):

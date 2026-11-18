@@ -4,6 +4,7 @@ import gympro.excepciones.DatosInvalidosException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.MetodoPago;
+import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.membresia.PlanAnual;
@@ -21,12 +22,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Scanner;
 
 /**
  * Menú de consola: registrar, buscar y listar miembros, crear y listar planes
- * (Sprint 1: HU-01 y HU-04) y contratar o renovar membresías (Sprint 2: HU-02).
+ * (Sprint 1: HU-01 y HU-04), contratar o renovar membresías y ver la ficha del
+ * miembro con su estado e historial (Sprint 2: HU-02 y HU-03).
  * En el Sprint 3 se reemplaza por la GUI.
  *
  * <p>Toda la lógica está en {@link Gimnasio}; esta clase solo pide los datos,
@@ -161,22 +164,58 @@ public class MenuConsola
         String dni = leerTexto("DNI: ");
         try
         {
-            Miembro m = gimnasio.buscarMiembro(dni);
-            System.out.println(SEPARADOR);
-            System.out.println("Código     : " + m.getCodigo());
-            System.out.println("Nombre     : " + m.getNombreCompleto());
-            System.out.println("DNI        : " + m.getDni());
-            System.out.println("Tipo       : " + m.getTipo()
-                    + " (descuento " + Math.round(m.getPorcentajeDescuento() * 100) + " %)");
-            System.out.println("Teléfono   : " + m.getTelefono());
-            System.out.println("Email      : " + m.getEmail());
-            System.out.println("Inscripción: " + m.getEstadoInscripcion());
-            System.out.println(SEPARADOR);
+            gimnasio.actualizarEstadosMembresias();
+            mostrarFicha(gimnasio.buscarMiembro(dni));
         }
         catch (MiembroNoEncontradoException e)
         {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Ficha del miembro (HU-03): datos personales, estado de inscripción, fecha de
+     * vencimiento, días restantes e historial de membresías ordenado por fecha de inicio.
+     */
+    private void mostrarFicha(Miembro m)
+    {
+        System.out.println(SEPARADOR);
+        System.out.println("Código     : " + m.getCodigo());
+        System.out.println("Nombre     : " + m.getNombreCompleto());
+        System.out.println("DNI        : " + m.getDni());
+        System.out.println("Tipo       : " + m.getTipo()
+                + " (descuento " + Math.round(m.getPorcentajeDescuento() * 100) + " %)");
+        System.out.println("Teléfono   : " + m.getTelefono());
+        System.out.println("Email      : " + m.getEmail());
+        System.out.println("Inscripción: " + m.getEstadoInscripcion());
+
+        Membresia actual = m.getMembresiaActual();
+        if (actual != null)
+        {
+            System.out.println("Vence      : " + actual.getFechaFin().format(FORMATO_FECHA));
+            System.out.println("Días rest. : " + m.getDiasRestantes());
+        }
+
+        System.out.println();
+        System.out.println("Historial de membresías:");
+        ArrayList<Membresia> historial = m.getHistorialMembresias();
+        if (historial.isEmpty())
+        {
+            System.out.println("  (sin membresías)");
+        }
+        else
+        {
+            historial.sort(Comparator.comparing(Membresia::getFechaInicio));
+            System.out.printf("  %-7s %-18s %-10s %-10s %-10s%n", "Código", "Plan", "Inicio", "Fin", "Estado");
+            for (Membresia mem : historial)
+            {
+                System.out.printf("  %-7s %-18s %-10s %-10s %-10s%n", mem.getCodigo(),
+                        recortar(mem.getPlan().getNombre(), 18),
+                        mem.getFechaInicio().format(FORMATO_FECHA),
+                        mem.getFechaFin().format(FORMATO_FECHA), mem.getEstado());
+            }
+        }
+        System.out.println(SEPARADOR);
     }
 
     private void listarMiembros()
