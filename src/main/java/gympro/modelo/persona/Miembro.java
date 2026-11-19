@@ -6,6 +6,7 @@ import gympro.modelo.membresia.Membresia;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Miembro del gimnasio (clase abstracta). Sus subclases definen el tipo y el
@@ -115,6 +116,25 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     public String getCodigo()
     {
         return codigo;
+    }
+
+    public Membresia getMembresiaVigente() {
+        LocalDate hoy = LocalDate.now();
+        for (Membresia m : historialMembresias) {
+            if (m.estaVigente(hoy)) return m;
+        }
+        return null;
+    }
+
+    public LocalDate getFechaVencimiento() {
+        Membresia m = getMembresiaVigente();
+        return (m == null) ? null : m.getFechaFin();
+    }
+
+    public ArrayList<Membresia> getHistorialOrdenado() {
+        ArrayList<Membresia> copia = new ArrayList<>(historialMembresias);
+        Collections.sort(copia);   // Membresia.compareTo ordena por fechaFin
+        return copia;
     }
 
     /** Orden natural: apellidos, luego nombres, y DNI como desempate. */
