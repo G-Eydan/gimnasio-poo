@@ -2,11 +2,12 @@ package gympro.modelo.persona;
 
 import gympro.excepciones.DatosInvalidosException;
 import gympro.modelo.enums.EstadoInscripcion;
+import gympro.modelo.enums.EstadoMembresia;
 import gympro.modelo.membresia.Membresia;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Miembro del gimnasio (clase abstracta). Sus subclases definen el tipo y el
@@ -20,6 +21,7 @@ import java.util.Collections;
 public abstract class Miembro extends Persona implements Descontable, Comparable<Miembro>
 {
     private static final long serialVersionUID = 1L;
+    private static final int DIAS_POR_VENCER = 7;
     private static int contador = 0;
 
     private final String codigo;
@@ -61,11 +63,58 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
         return new ArrayList<>(historialMembresias);
     }
 
-    /** @return la última membresía registrada, o {@code null} si no tiene ninguna */
+    /** @return copia del historial ordenada por fecha de inicio (la más antigua primero) */
+    public ArrayList<Membresia> getHistorialOrdenado()
+    {
+        ArrayList<Membresia> copia = new ArrayList<>(historialMembresias);
+        copia.sort(Comparator.comparing(Membresia::getFechaInicio));
+        return copia;
+    }
+
+    /** @return la membresía vigente hoy, o {@code null} si no hay ninguna */
+    public Membresia getMembresiaVigente()
+    {
+        return getMembresiaVigente(LocalDate.now());
+    }
+
+    /**
+     * @param hoy fecha de referencia (permite probar con fechas distintas a la actual)
+     * @return la membresía no cancelada cuyo periodo incluye {@code hoy}, o {@code null}
+     */
+    public Membresia getMembresiaVigente(LocalDate hoy)
+    {
+        for(Membresia m : historialMembresias)
+        {
+            if(m.getEstado() == EstadoMembresia.CANCELADA) continue;
+            if(!hoy.isBefore(m.getFechaInicio()) && !hoy.isAfter(m.getFechaFin()))
+            {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return la membresía vigente hoy; si no hay, la última no cancelada;
+     *         {@code null} si no tiene ninguna
+     */
     public Membresia getMembresiaActual()
     {
-        if(historialMembresias.isEmpty()) return null;
-        return historialMembresias.get(historialMembresias.size() - 1);
+        return getMembresiaActual(LocalDate.now());
+    }
+
+    /** Igual que {@link #getMembresiaActual()} pero con fecha de referencia. */
+    public Membresia getMembresiaActual(LocalDate hoy)
+    {
+        Membresia vigente = getMembresiaVigente(hoy);
+        if(vigente != null) return vigente;
+
+        Membresia ultima = null;
+        for(Membresia m : historialMembresias)
+        {
+            if(m.getEstado() != EstadoMembresia.CANCELADA) ultima = m;
+        }
+        return ultima;
     }
 
     /** @return true si aún no tiene ninguna membresía registrada */
@@ -84,57 +133,57 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
         return pesoKg / (alturaM * alturaM);
     }
 
-    /** @return días que faltan para el fin de la última membresía (0 si no tiene o ya venció) */
-    public long getDiasRestantes()
+    /** @return fecha de fin de la membresía actual, o {@code null} si no tiene ninguna */
+    public LocalDate getFechaVencimiento()
     {
-        Membresia actual = getMembresiaActual();
-        if(actual == null || LocalDate.now().isAfter(actual.getFechaFin()))
-        {
-            return 0;
-        }
-        return ChronoUnit.DAYS.between(LocalDate.now(), actual.getFechaFin());
+        Membresia m = getMembresiaActual();
+        return (m == null) ? null : m.getFechaFin();
     }
 
-    /** @return estado según la última membresía: POR_VENCER si quedan 7 días o menos */
+    /** @return días que faltan para el fin de la membresía vigente (0 si no hay vigente) */
+    public long getDiasRestantes()
+    {
+        return getDiasRestantes(LocalDate.now());
+    }
+
+    /** Igual que {@link #getDiasRestantes()} pero con fecha de referencia. */
+    public long getDiasRestantes(LocalDate hoy)
+    {
+        Membresia vigente = getMembresiaVigente(hoy);
+        if(vigente == null) return 0;
+        return ChronoUnit.DAYS.between(hoy, vigente.getFechaFin());
+    }
+
+    /** @return estado de inscripción; POR_VENCER si quedan 7 días o menos */
     public EstadoInscripcion getEstadoInscripcion()
     {
-        Membresia actual = getMembresiaActual();
-        if(actual == null) return EstadoInscripcion.SIN_MEMBRESIA;
+        return getEstadoInscripcion(LocalDate.now());
+    }
 
-        long dias = getDiasRestantes();
-        if(LocalDate.now().isAfter(actual.getFechaFin()))
+    /** Igual que {@link #getEstadoInscripcion()} pero con fecha de referencia. */
+    public EstadoInscripcion getEstadoInscripcion(LocalDate hoy)
+    {
+        if(getMembresiaVigente(hoy) != null)
         {
-            return EstadoInscripcion.VENCIDO;
+            return (getDiasRestantes(hoy) <= DIAS_POR_VENCER)
+                    ? EstadoInscripcion.POR_VENCER
+                    : EstadoInscripcion.ACTIVO;
         }
-        else if(dias <= 7)
+
+        // Sin vigente: es VENCIDO si alguna membresía no cancelada ya terminó
+        for(Membresia m : historialMembresias)
         {
-            return EstadoInscripcion.POR_VENCER;
+            if(m.getEstado() != EstadoMembresia.CANCELADA && m.getFechaFin().isBefore(hoy))
+            {
+                return EstadoInscripcion.VENCIDO;
+            }
         }
-        return EstadoInscripcion.ACTIVO;
+        return EstadoInscripcion.SIN_MEMBRESIA;
     }
 
     public String getCodigo()
     {
         return codigo;
-    }
-
-    public Membresia getMembresiaVigente() {
-        LocalDate hoy = LocalDate.now();
-        for (Membresia m : historialMembresias) {
-            if (m.estaVigente(hoy)) return m;
-        }
-        return null;
-    }
-
-    public LocalDate getFechaVencimiento() {
-        Membresia m = getMembresiaVigente();
-        return (m == null) ? null : m.getFechaFin();
-    }
-
-    public ArrayList<Membresia> getHistorialOrdenado() {
-        ArrayList<Membresia> copia = new ArrayList<>(historialMembresias);
-        Collections.sort(copia);   // Membresia.compareTo ordena por fechaFin
-        return copia;
     }
 
     /** Orden natural: apellidos, luego nombres, y DNI como desempate. */
