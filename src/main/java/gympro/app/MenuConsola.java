@@ -1,7 +1,10 @@
 package gympro.app;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
+import gympro.modelo.enums.MetodoPago;
+import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.membresia.PlanAnual;
 import gympro.modelo.membresia.PlanMensual;
@@ -18,11 +21,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
- * Menú de consola del Sprint 1 (HU-01 y HU-04): registrar, buscar y listar
- * miembros, y crear y listar planes. En el Sprint 3 se reemplaza por la GUI.
+ * Menú de consola: registrar, buscar y listar miembros, crear y listar planes
+ * (Sprint 1: HU-01 y HU-04) y contratar o renovar membresías (Sprint 2: HU-02).
+ * En el Sprint 3 se reemplaza por la GUI.
  *
  * <p>Toda la lógica está en {@link Gimnasio}; esta clase solo pide los datos,
  * llama al servicio y muestra el resultado o el mensaje de error.</p>
@@ -68,6 +73,7 @@ public class MenuConsola
                 case 3 -> listarMiembros();
                 case 4 -> crearPlan();
                 case 5 -> listarPlanes();
+                case 6 -> contratarMembresia();
                 case 0 -> System.out.println("Hasta pronto.");
                 default -> System.out.println("Opción no válida.");
             }
@@ -84,6 +90,7 @@ public class MenuConsola
         System.out.println("3. Listar miembros");
         System.out.println("4. Crear plan");
         System.out.println("5. Listar planes");
+        System.out.println("6. Contratar / renovar membresía");
         System.out.println("0. Salir");
     }
 
@@ -246,8 +253,99 @@ public class MenuConsola
     }
 
     // ------------------------------------------------------------------
+    // Membresías (HU-02)
+    // ------------------------------------------------------------------
+
+    /**
+     * Contrata una membresía: pide miembro, plan y método de pago, muestra el total
+     * y, al confirmar, registra el pago y muestra el comprobante con el desglose.
+     * Si el miembro ya tiene una membresía vigente, ofrece renovarla (RN-06).
+     */
+    private void contratarMembresia()
+    {
+        System.out.println("--- Contratar / renovar membresía ---");
+        try
+        {
+            String dni = leerTexto("DNI del miembro: ");
+            Miembro miembro = gimnasio.buscarMiembro(dni);
+            System.out.println("Miembro: " + miembro.getNombreCompleto() + " (" + miembro.getTipo() + ")");
+            System.out.println();
+
+            if (gimnasio.listarPlanes().isEmpty())
+            {
+                System.out.println("No hay planes registrados. Cree uno con la opción 4.");
+                return;
+            }
+            listarPlanes();
+            String codPlan = leerTexto("Código del plan: ");
+            Plan plan = gimnasio.buscarPlan(codPlan);
+            if (plan == null)
+            {
+                System.out.println("Error: no existe un plan con el código " + codPlan + ".");
+                return;
+            }
+
+            MetodoPago metodo = leerMetodoPago();
+            if (metodo == null)
+            {
+                System.out.println("Método de pago no válido.");
+                return;
+            }
+
+            System.out.printf(Locale.US, "Total a pagar: S/ %.2f%n", gimnasio.calcularImporte(miembro, plan, metodo));
+            if (!confirmar("¿Confirmar el pago? (S/N): "))
+            {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+
+            Pago pago;
+            try
+            {
+                pago = gimnasio.contratarMembresia(dni, codPlan, metodo);
+            }
+            catch (MembresiaActivaException e)
+            {
+                System.out.println(e.getMessage());
+                if (!confirmar("¿Desea renovarla? La nueva empieza al terminar la vigente. (S/N): "))
+                {
+                    System.out.println("Operación cancelada.");
+                    return;
+                }
+                pago = gimnasio.renovarMembresia(dni, codPlan, metodo);
+            }
+            System.out.println();
+            System.out.print(pago.generarComprobante());
+            System.out.println("Estado de la membresía: " + pago.getMembresia().getEstado());
+        }
+        catch (MiembroNoEncontradoException | MembresiaActivaException | DatosInvalidosException e)
+        {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Lectura de datos
     // ------------------------------------------------------------------
+
+    /** Muestra los métodos de pago con su recargo y devuelve el elegido, o {@code null} si no es válido. */
+    private MetodoPago leerMetodoPago()
+    {
+        MetodoPago[] metodos = MetodoPago.values();
+        System.out.println("Método de pago:");
+        for (int i = 0; i < metodos.length; i++)
+        {
+            System.out.printf(Locale.US, "  %d. %s (recargo %.0f %%)%n", i + 1, metodos[i], metodos[i].getRecargo() * 100);
+        }
+        int opcion = leerEntero("Método: ");
+        return (opcion >= 1 && opcion <= metodos.length) ? metodos[opcion - 1] : null;
+    }
+
+    /** Devuelve {@code true} solo si el usuario responde S o s. */
+    private boolean confirmar(String mensaje)
+    {
+        return leerTexto(mensaje).equalsIgnoreCase("S");
+    }
 
     private String leerTexto(String mensaje)
     {

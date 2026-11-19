@@ -73,6 +73,7 @@ java -cp target/classes gympro.app.Main
 3. Listar miembros
 4. Crear plan
 5. Listar planes
+6. Contratar / renovar membresía
 0. Salir
 ```
 
@@ -84,6 +85,11 @@ Ejemplo de recorrido (demo del Sprint 1):
 4. **Opción 1** con DNI `1234`: se muestra el mensaje de error y el menú continúa.
 5. **Opción 2** con un DNI registrado: muestra código, datos, tipo, descuento y estado.
 6. **Opción 3**: lista los miembros ordenados por apellido.
+
+Contratar y renovar (Sprint 2):
+
+7. **Opción 6** con un miembro estudiante, plan `PT` y método `4` (tarjeta), y confirmar con `S`. El comprobante muestra el desglose: importe S/ 324.00, descuento S/ 48.60, matrícula S/ 50.00, recargo S/ 9.76 y total **S/ 335.16**.
+8. **Opción 6** otra vez con el mismo miembro: avisa que ya tiene una membresía vigente y ofrece renovarla. Con `S`, la nueva membresía empieza el día siguiente al fin de la vigente, queda `PENDIENTE` y no cobra matrícula.
 
 Los datos se guardan solo en memoria mientras el programa está abierto (la persistencia llega en el Sprint 4).
 
