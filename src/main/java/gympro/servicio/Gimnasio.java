@@ -16,6 +16,7 @@ import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.persona.Miembro;
+import gympro.modelo.persona.Usuario;
 import gympro.util.Validador;
 
 /**
@@ -43,6 +44,7 @@ public class Gimnasio implements Serializable {
     private final ArrayList<Plan> planes = new ArrayList<>();
     private final ArrayList<Membresia> membresias = new ArrayList<>();
     private final ArrayList<Pago> pagos = new ArrayList<>();
+    private final ArrayList<Usuario> usuarios = new ArrayList<>();
 
     // Contadores de códigos (de instancia, para que se guarden con el respaldo .dat)
     private int contadorMembresias = 0;
@@ -282,6 +284,44 @@ public class Gimnasio implements Serializable {
         Collections.sort(lista);
         return lista;
     }
+
+    // ==================================================================
+    // Usuarios (HU-12)
+    // ==================================================================
+
+    /**
+     * Agrega un usuario del sistema.
+     *
+     * @throws DatosInvalidosException si es {@code null} o ya existe uno con ese nombre de usuario
+     */
+    public void registrarUsuario(Usuario usuario) throws DatosInvalidosException {
+        if (usuario == null) {
+            throw new DatosInvalidosException("El usuario no puede ser nulo.");
+        }
+        for (Usuario u : usuarios) {
+            if (u.getUsername().equalsIgnoreCase(usuario.getUsername())) {
+                throw new DatosInvalidosException("Ya existe el usuario " + usuario.getUsername() + ".");
+            }
+        }
+        usuarios.add(usuario);
+    }
+
+    /**
+     * Busca el usuario con esas credenciales.
+     *
+     * @return el usuario autenticado
+     * @throws DatosInvalidosException si el usuario o la contraseña son incorrectos
+     */
+    public Usuario iniciarSesion(String user, String pass) throws DatosInvalidosException {
+        for (Usuario u : usuarios) {
+            if (u.autenticar(user, pass)) {
+                return u;
+            }
+        }
+        throw new DatosInvalidosException("Usuario o contraseña incorrectos.");
+    }
+
+    public ArrayList<Usuario> getUsuarios() { return new ArrayList<>(usuarios); }
 
     // ==================================================================
     // Consultas (copias defensivas)

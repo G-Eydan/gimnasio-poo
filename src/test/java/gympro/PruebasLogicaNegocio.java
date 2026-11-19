@@ -15,6 +15,8 @@ import gympro.modelo.persona.Miembro;
 import gympro.modelo.persona.MiembroCorporativo;
 import gympro.modelo.persona.MiembroEstudiante;
 import gympro.modelo.persona.MiembroRegular;
+import gympro.modelo.persona.Usuario;
+import gympro.modelo.enums.Rol;
 import gympro.servicio.Gimnasio;
 
 import java.time.LocalDate;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
 
 /**
  * Pruebas de la lógica de negocio de I1 (sin JUnit, para que corran con solo Java).
- * Cubren HU-04 y los casos CP-01 a CP-09 de la especificación.
+ * Cubren HU-04, HU-12 y los casos CP-01 a CP-09 y CP-18 de la especificación.
  *
  * Se ejecuta como cualquier clase con main (en IntelliJ: clic derecho, Run).
  */
@@ -77,12 +79,45 @@ public class PruebasLogicaNegocio {
         pruebaVencimientos();
         pruebaMiembrosYPlanes();
         pruebaComprobante();
+        pruebaUsuarios();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
         if (fallidas > 0) {
             System.exit(1);
         }
+    }
+
+    // HU-12 y CP-18
+    private static void pruebaUsuarios() throws Exception {
+        System.out.println("HU-12 - Usuarios y roles");
+        Gimnasio g = new Gimnasio("GymPro Test");
+        g.registrarUsuario(new Usuario("admin", "admin123", Rol.ADMINISTRADOR));
+        g.registrarUsuario(new Usuario("recepcion", "recepcion123", Rol.RECEPCIONISTA));
+        g.registrarUsuario(new Usuario("entrenador", "entrenador123", Rol.ENTRENADOR));
+
+        verificar("Login admin correcto", g.iniciarSesion("admin", "admin123").getRol() == Rol.ADMINISTRADOR);
+        verificar("Usuario sin distinguir mayúsculas", g.iniciarSesion("Recepcion", "recepcion123").getRol() == Rol.RECEPCIONISTA);
+        esperarExcepcion("Contraseña incorrecta", DatosInvalidosException.class,
+                () -> g.iniciarSesion("admin", "otra"));
+        esperarExcepcion("Contraseña distingue mayúsculas", DatosInvalidosException.class,
+                () -> g.iniciarSesion("admin", "ADMIN123"));
+        esperarExcepcion("Usuario inexistente", DatosInvalidosException.class,
+                () -> g.iniciarSesion("nadie", "admin123"));
+        esperarExcepcion("Usuario duplicado", DatosInvalidosException.class,
+                () -> g.registrarUsuario(new Usuario("ADMIN", "x", Rol.RECEPCIONISTA)));
+        esperarExcepcion("Usuario vacío", DatosInvalidosException.class,
+                () -> new Usuario(" ", "x", Rol.ADMINISTRADOR));
+
+        Usuario admin = g.iniciarSesion("admin", "admin123");
+        Usuario recepcion = g.iniciarSesion("recepcion", "recepcion123");
+        Usuario entrenador = g.iniciarSesion("entrenador", "entrenador123");
+        verificar("Admin accede a reportes", admin.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("Recepción accede a planes y pagos", recepcion.puedeAcceder(Usuario.MODULO_PLANES_PAGOS));
+        verificar("Recepción no accede a reportes", !recepcion.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("CP-18 entrenador no ve reportes", !entrenador.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("Entrenador accede a rutinas", entrenador.puedeAcceder(Usuario.MODULO_RUTINAS));
+        verificar("toString no muestra la contraseña", !admin.toString().contains("admin123"));
     }
 
     // HU-04
