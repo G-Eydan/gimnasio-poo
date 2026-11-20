@@ -37,7 +37,7 @@ La rama `main` tiene la última versión estable.
 3. Si el código aparece en rojo, abrir la pestaña **Maven** (a la derecha) y pulsar **Reload All Maven Projects**.
 4. Abrir `src/main/java/gympro/app/Main.java` y pulsar **Run** (el triángulo verde junto a `main`).
 
-El menú aparece en la consola de IntelliJ.
+Primero se abre la ventana de inicio de sesión; después de ingresar, el menú aparece en la consola de IntelliJ.
 
 ### Opción 2: terminal, sin IDE
 
@@ -63,6 +63,18 @@ java -cp out gympro.app.Main
 mvn compile
 java -cp target/classes gympro.app.Main
 ```
+
+## Inicio de sesión
+
+Al ejecutar `Main` se abre la ventana **Iniciar sesión**. Usuarios de prueba:
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin123` | Administrador |
+| `recepcion` | `recepcion123` | Recepcionista |
+| `entrenador` | `entrenador123` | Entrenador |
+
+Si el usuario o la contraseña son incorrectos aparece un mensaje de error. Al ingresar, la ventana se cierra y el menú continúa en la consola.
 
 ## Uso del menú
 
