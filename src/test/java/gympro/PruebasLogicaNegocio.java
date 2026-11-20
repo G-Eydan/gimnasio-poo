@@ -160,12 +160,21 @@ public class PruebasLogicaNegocio {
         verificarMonto("Regular 1ra vez (con matrícula)", primera.getTotal(), 170.00);
         Pago segunda = g2.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 6, 1));
         verificarMonto("CP-04 total", segunda.getTotal(), 120.00);
+        verificarMonto("CP-04 importe del plan", segunda.getMontoPlan(), 120.00);
+        verificarMonto("CP-04 descuento", segunda.getDescuento(), 0.00);
         verificarMonto("CP-04 sin matrícula", segunda.getMatricula(), 0.00);
+        verificarMonto("CP-04 recargo", segunda.getRecargo(), 0.00);
+        verificarMonto("CP-04 calcularTotal()", segunda.calcularTotal(), 120.00);
 
         // CP-05: corporativo + anual + primera vez + Yape
         Gimnasio g3 = nuevoGimnasio();
         Pago p5 = g3.contratarMembresia("70000003", "PA", MetodoPago.YAPE_PLIN, LocalDate.of(2026, 11, 1));
         verificarMonto("CP-05 total", p5.getTotal(), 971.60);
+        verificarMonto("CP-05 importe del plan", p5.getMontoPlan(), 1152.00);
+        verificarMonto("CP-05 descuento", p5.getDescuento(), 230.40);
+        verificarMonto("CP-05 matrícula", p5.getMatricula(), 50.00);
+        verificarMonto("CP-05 recargo", p5.getRecargo(), 0.00);
+        verificarMonto("CP-05 calcularTotal()", p5.calcularTotal(), 971.60);
     }
 
     // CP-06, CP-07
