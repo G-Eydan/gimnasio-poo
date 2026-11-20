@@ -265,7 +265,6 @@ public class Gimnasio implements Serializable {
                 lista.add(m);
             }
         }
-        Collections.sort(lista);
         return lista;
     }
 
