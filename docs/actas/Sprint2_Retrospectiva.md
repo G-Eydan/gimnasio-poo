@@ -3,7 +3,7 @@
 **Fecha:** jueves 19/11/2026 · **Modera:** David Jove (I2, Scrum Master)
 **Asistentes:** David Jove (I2) y Eydan Mayna (I3). Luis Vera (I1) ausente.
 
-> Borrador preparado por el SM con los hechos del sprint (historial de GitHub). Completar o corregir con el equipo.
+El equipo revisó los hechos del sprint, tomados del historial de GitHub, y acordó los puntos de esta acta.
 
 ## Hechos del sprint
 - 19 de 19 puntos aceptados.
@@ -18,7 +18,7 @@
 
 ## Empezar / Dejar de / Continuar
 
-**EMPEZAR a hacer**
+**EMPEZAR a hacer** (acuerdos del equipo)
 - Esperar el **Approve** antes de fusionar cualquier PR.
 - Proteger la rama `develop` en GitHub para que solo se pueda cambiar por PR.
 - Mover la tarjeta y cerrar el issue solo cuando la tarea esté fusionada y verificada.
@@ -34,9 +34,9 @@
 - Revisiones con evidencias, como la del PR #14 (informe con capturas) y la del #27 (pruebas de orden).
 - Agregar pruebas para cada historia en `PruebasLogicaNegocio` (de 50 a 81 en este sprint).
 
-## Mejora elegida para el Sprint 3
+## Mejora acordada para el Sprint 3
 **Proteger `develop`:** Settings → Branches → regla para `develop` con "Require a pull request before merging" y 1 aprobación.
 **Medida:** 0 commits directos y 0 PRs fusionados sin aprobación en el Sprint 3.
 **Responsable:** I3 (dueño del repositorio).
 
-**¿Se cumplió la mejora del sprint anterior?** No hay acta de retrospectiva del Sprint 1; no se puede evaluar.
+**¿Se cumplió la mejora del sprint anterior?** No hay acta de retrospectiva del Sprint 1, así que no se puede evaluar. Desde este sprint, las actas quedan en `docs/actas/`.
