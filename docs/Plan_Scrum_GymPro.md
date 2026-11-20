@@ -677,7 +677,7 @@ Para agregar la línea real, añadir debajo de la línea ideal otra fila `line [
 | Sprint | Comprometido | Terminado | Aceptado | Observaciones |
 |---|---|---|---|---|
 | S1 | 18 | | | |
-| S2 | 19 | | | |
+| S2 | 19 | 19 | 19 | PO ausente en la review; aceptación por SM y QA ([acta](actas/Sprint2_Review.md)) |
 | S3 | 19 | | | |
 | S4 | 19 | | | |
 | S5 | 19 | | | |
