@@ -37,7 +37,7 @@ La rama `main` tiene la última versión estable.
 3. Si el código aparece en rojo, abrir la pestaña **Maven** (a la derecha) y pulsar **Reload All Maven Projects**.
 4. Abrir `src/main/java/gympro/app/Main.java` y pulsar **Run** (el triángulo verde junto a `main`).
 
-Primero se abre la ventana de inicio de sesión; después de ingresar, el menú aparece en la consola de IntelliJ.
+Primero se abre la ventana de inicio de sesión; después de ingresar se abre la ventana principal y el menú aparece en la consola de IntelliJ.
 
 ### Opción 2: terminal, sin IDE
 
@@ -74,7 +74,15 @@ Al ejecutar `Main` se abre la ventana **Iniciar sesión**. Usuarios de prueba:
 | `recepcion` | `recepcion123` | Recepcionista |
 | `entrenador` | `entrenador123` | Entrenador |
 
-Si el usuario o la contraseña son incorrectos aparece un mensaje de error. Al ingresar, la ventana se cierra y el menú continúa en la consola.
+Si el usuario o la contraseña son incorrectos aparece un mensaje de error. Al ingresar se abre la **ventana principal**, que muestra solo las pestañas y menús del rol:
+
+| Rol | Pestañas | Menús |
+|---|---|---|
+| Administrador | Dashboard, Miembros, Planes y Pagos, Entrenadores, Rutinas, Reportes | Archivo (completo), Base de datos, Ayuda |
+| Recepcionista | Dashboard, Miembros, Planes y Pagos | Archivo (solo Salir), Ayuda |
+| Entrenador | Miembros, Rutinas (no ve Reportes) | Archivo (solo Salir), Ayuda |
+
+Las pestañas todavía están vacías (su contenido llega en el Sprint 3). Mientras tanto, el menú de consola sigue funcionando en paralelo.
 
 ## Uso del menú
 

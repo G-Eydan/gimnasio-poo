@@ -2,6 +2,7 @@ package gympro.app;
 
 import gympro.excepciones.DatosInvalidosException;
 import gympro.gui.VentanaLogin;
+import gympro.gui.VentanaPrincipal;
 import gympro.modelo.enums.Rol;
 import gympro.modelo.persona.Usuario;
 import gympro.servicio.Gimnasio;
@@ -9,8 +10,9 @@ import gympro.servicio.Gimnasio;
 import javax.swing.SwingUtilities;
 
 /**
- * Punto de entrada de GymPro. Desde el Sprint 2 abre primero la ventana de login (HU-12)
- * y, al ingresar, el menú de consola. La ventana principal según el rol llega con HU-12 T2.
+ * Punto de entrada de GymPro. Abre la ventana de login (HU-12) y, al ingresar, la
+ * ventana principal con los módulos que permite el rol. Mientras las pestañas no tengan
+ * contenido (Sprint 3), el menú de consola sigue disponible en paralelo.
  *
  * @author I2
  */
@@ -22,7 +24,14 @@ public class Main
         registrarUsuariosDePrueba(gimnasio);
 
         SwingUtilities.invokeLater(() ->
-                new VentanaLogin(gimnasio, usuario -> abrirMenuConsola(gimnasio, usuario)).setVisible(true));
+                new VentanaLogin(gimnasio, usuario -> iniciarSesion(gimnasio, usuario)).setVisible(true));
+    }
+
+    /** Se llama desde el hilo de Swing al ingresar correctamente. */
+    private static void iniciarSesion(Gimnasio gimnasio, Usuario usuario)
+    {
+        new VentanaPrincipal(gimnasio, usuario).setVisible(true);
+        abrirMenuConsola(gimnasio, usuario);
     }
 
     /** Los 3 usuarios de prueba de HU-12, uno por rol. */
