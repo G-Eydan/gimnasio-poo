@@ -86,6 +86,7 @@ Si el usuario o la contraseña son incorrectos aparece un mensaje de error. Al i
 4. Crear plan
 5. Listar planes
 6. Contratar / renovar membresía
+7. Ver membresías vencidas y por vencer
 0. Salir
 ```
 
@@ -102,6 +103,7 @@ Contratar y renovar (Sprint 2):
 
 7. **Opción 6** con un miembro estudiante, plan `PT` y método `4` (tarjeta), y confirmar con `S`. El comprobante muestra el desglose: importe S/ 324.00, descuento S/ 48.60, matrícula S/ 50.00, recargo S/ 9.76 y total **S/ 335.16**.
 8. **Opción 6** otra vez con el mismo miembro: avisa que ya tiene una membresía vigente y ofrece renovarla. Con `S`, la nueva membresía empieza el día siguiente al fin de la vigente, queda `PENDIENTE` y no cobra matrícula.
+9. **Opción 7**: pide cuántos días considerar "por vencer" (Enter = 7) y muestra dos listas ordenadas por fecha de fin: las membresías **vencidas** (con los días que lleva vencida) y las que **vencen en los próximos N días** (con los días restantes). Al iniciar el menú, los estados de las membresías se actualizan automáticamente.
 
 Los datos se guardan solo en memoria mientras el programa está abierto (la persistencia llega en el Sprint 4).
 

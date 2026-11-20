@@ -29,7 +29,8 @@ import java.util.Scanner;
 /**
  * Menú de consola: registrar, buscar y listar miembros, crear y listar planes
  * (Sprint 1: HU-01 y HU-04), contratar o renovar membresías y ver la ficha del
- * miembro con su estado e historial (Sprint 2: HU-02 y HU-03).
+ * miembro con su estado e historial, y ver las membresías vencidas y por vencer
+ * (Sprint 2: HU-02, HU-03 y HU-05).
  * En el Sprint 3 se reemplaza por la GUI.
  *
  * <p>Toda la lógica está en {@link Gimnasio}; esta clase solo pide los datos,
@@ -43,6 +44,8 @@ public class MenuConsola
     private static final DateTimeFormatter FORMATO_FECHA =
             DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
     private static final String SEPARADOR = "------------------------------------------------------------";
+    /** N por defecto para "próximas a vencer" (HU-05). */
+    private static final int DIAS_POR_VENCER = 7;
 
     private final Gimnasio gimnasio;
     private final Scanner entrada;
@@ -60,9 +63,18 @@ public class MenuConsola
         this.entrada = entrada;
     }
 
-    /** Muestra el menú hasta que el usuario elige salir. */
+    /**
+     * Muestra el menú hasta que el usuario elige salir. Al iniciar actualiza los estados
+     * de las membresías (HU-05: "al iniciar el sistema se actualizan los estados").
+     */
     public void iniciar()
     {
+        int vencidas = gimnasio.actualizarEstadosMembresias();
+        if (vencidas > 0)
+        {
+            System.out.println("Estados actualizados: " + vencidas + " membresías vencieron.");
+        }
+
         int opcion;
         do
         {
@@ -77,6 +89,7 @@ public class MenuConsola
                 case 4 -> crearPlan();
                 case 5 -> listarPlanes();
                 case 6 -> contratarMembresia();
+                case 7 -> verVencimientos();
                 case 0 -> System.out.println("Hasta pronto.");
                 default -> System.out.println("Opción no válida.");
             }
@@ -94,6 +107,7 @@ public class MenuConsola
         System.out.println("4. Crear plan");
         System.out.println("5. Listar planes");
         System.out.println("6. Contratar / renovar membresía");
+        System.out.println("7. Ver membresías vencidas y por vencer");
         System.out.println("0. Salir");
     }
 
@@ -360,6 +374,71 @@ public class MenuConsola
         catch (MiembroNoEncontradoException | MembresiaActivaException | DatosInvalidosException e)
         {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Vencimientos (HU-05)
+    // ------------------------------------------------------------------
+
+    /**
+     * Actualiza los estados y muestra las membresías vencidas y las que vencen en los
+     * próximos N días (N = 7 por defecto, configurable).
+     */
+    private void verVencimientos()
+    {
+        System.out.println("--- Membresías vencidas y por vencer ---");
+        String texto = leerTexto("Días para \"por vencer\" (Enter = " + DIAS_POR_VENCER + "): ");
+        int dias = DIAS_POR_VENCER;
+        if (!texto.isEmpty())
+        {
+            try
+            {
+                dias = Integer.parseInt(texto);
+            }
+            catch (NumberFormatException e)
+            {
+                dias = -1;
+            }
+            if (dias < 1)
+            {
+                System.out.println("Error: ingrese un número de días mayor que 0.");
+                return;
+            }
+        }
+
+        int nuevas = gimnasio.actualizarEstadosMembresias();
+        if (nuevas > 0)
+        {
+            System.out.println("Se marcaron " + nuevas + " membresías como vencidas.");
+        }
+        LocalDate hoy = LocalDate.now();
+
+        ArrayList<Membresia> vencidas = gimnasio.getMembresiasVencidas();
+        System.out.println();
+        System.out.println("Vencidas (" + vencidas.size() + "):");
+        imprimirMembresias(vencidas, hoy, "Días venc.");
+
+        ArrayList<Membresia> porVencer = gimnasio.getMembresiasProximasAVencer(dias);
+        System.out.println();
+        System.out.println("Vencen en los próximos " + dias + " días (" + porVencer.size() + "):");
+        imprimirMembresias(porVencer, hoy, "Días rest.");
+    }
+
+    /** Tabla de membresías; la última columna son los días desde o hasta la fecha de fin. */
+    private void imprimirMembresias(ArrayList<Membresia> lista, LocalDate hoy, String columnaDias)
+    {
+        if (lista.isEmpty())
+        {
+            System.out.println("  (ninguna)");
+            return;
+        }
+        System.out.printf("  %-7s %-24s %-16s %-10s %s%n", "Código", "Miembro", "Plan", "Fin", columnaDias);
+        for (Membresia m : lista)
+        {
+            System.out.printf("  %-7s %-24s %-16s %-10s %d%n", m.getCodigo(),
+                    recortar(m.getMiembro().getNombreCompleto(), 24), recortar(m.getPlan().getNombre(), 16),
+                    m.getFechaFin().format(FORMATO_FECHA), Math.abs(m.diasRestantes(hoy)));
         }
     }
 
