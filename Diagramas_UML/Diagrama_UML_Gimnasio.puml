@@ -1,0 +1,703 @@
+@startuml Diagrama_UML_Gimnasio
+' ============================================================
+'  GymPro - Sistema de Administración de un Gimnasio
+'  Diagrama de clases UML completo - DSOO 2026-B (UNSA)
+'  Ver en: https://www.plantuml.com  o extensión PlantUML (VS Code)
+'  Regenerar el SVG (plantuml.jar de https://plantuml.com/download; sin Graphviz
+'  instalado se usa el motor integrado con -Playout=smetana):
+'    java -jar plantuml.jar -Playout=smetana -tsvg Diagramas_UML/Diagrama_UML_Gimnasio.puml
+'
+'  Actualizado al Sprint 2 (v0.2). Las clases en verde ya están
+'  implementadas; las blancas son el diseño de los próximos sprints.
+' ============================================================
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam nodesep 25
+skinparam ranksep 35
+skinparam class {
+  BackgroundColor #FEFEFE
+  BorderColor #444444
+  ArrowColor #333333
+}
+skinparam package {
+  BackgroundColor #F4F8FB
+  BorderColor #7A9CC6
+}
+hide empty members
+title GymPro - Diagrama de Clases UML (actualizado al Sprint 2, v0.2)
+
+' ======================= ENUMERACIONES =======================
+package "enums (modelo.enums)" as PE #FFF8E7 {
+  enum EstadoMembresia #E8F5E9 {
+    PENDIENTE
+    ACTIVA
+    VENCIDA
+    CANCELADA
+  }
+  enum EstadoInscripcion #E8F5E9 {
+    ACTIVO
+    POR_VENCER
+    VENCIDO
+    SIN_MEMBRESIA
+  }
+  enum MetodoPago #E8F5E9 {
+    EFECTIVO(0.0)
+    YAPE_PLIN(0.0)
+    TRANSFERENCIA(0.0)
+    TARJETA(0.03)
+    --
+    - recargo : double
+    - MetodoPago(recargo : double)
+    + getRecargo() : double
+  }
+  enum Especialidad #E8F5E9 {
+    MUSCULACION
+    CARDIO
+    CROSSFIT
+    FUNCIONAL
+    YOGA
+    PILATES
+    NUTRICION
+    REHABILITACION
+  }
+  enum Turno #E8F5E9 {
+    MANANA
+    TARDE
+    NOCHE
+  }
+  enum GrupoMuscular #E8F5E9 {
+    PECHO
+    ESPALDA
+    PIERNAS
+    HOMBROS
+    BRAZOS
+    ABDOMEN
+    CUERPO_COMPLETO
+    CARDIO
+  }
+  enum Objetivo #E8F5E9 {
+    HIPERTROFIA
+    FUERZA
+    PERDIDA_DE_PESO
+    RESISTENCIA
+    TONIFICACION
+  }
+  enum DiaSemana #E8F5E9 {
+    LUNES
+    MARTES
+    MIERCOLES
+    JUEVES
+    VIERNES
+    SABADO
+    DOMINGO
+  }
+  enum Rol #E8F5E9 {
+    ADMINISTRADOR
+    RECEPCIONISTA
+    ENTRENADOR
+  }
+}
+
+
+' ======================= PERSONAS ============================
+package "modelo.persona" {
+  interface Descontable <<interface>> #E8F5E9 {
+    + getPorcentajeDescuento() : double
+  }
+  abstract class Persona <<Serializable>> #E8F5E9 {
+    # dni : String
+    # nombres : String
+    # apellidos : String
+    # fechaNacimiento : LocalDate
+    # telefono : String
+    # email : String
+    --
+    + Persona(dni, nombres, apellidos)
+    + Persona(dni, nombres, apellidos, fechaNac, telefono, email)
+    + getNombreCompleto() : String
+    + getEdad() : int
+    + {abstract} getRol() : String
+    + equals(o : Object) : boolean
+    + hashCode() : int
+    + toString() : String
+  }
+
+  abstract class Miembro #E8F5E9 {
+    - codigo : String
+    - {static} contador : int
+    - historialMembresias : ArrayList<Membresia>
+    --
+    + Miembro(dni, nombres, apellidos)
+    + Miembro(dni, nombres, apellidos, fechaNac, telefono, email)
+    + agregarMembresia(m : Membresia) : void
+    + getHistorialMembresias() : ArrayList<Membresia>
+    + getHistorialOrdenado() : ArrayList<Membresia>
+    + getMembresiaVigente() : Membresia
+    + getMembresiaVigente(hoy : LocalDate) : Membresia
+    + getMembresiaActual() : Membresia
+    + getMembresiaActual(hoy : LocalDate) : Membresia
+    + esPrimeraMembresia() : boolean
+    + getFechaVencimiento() : LocalDate
+    + getDiasRestantes() : long
+    + getDiasRestantes(hoy : LocalDate) : long
+    + getEstadoInscripcion() : EstadoInscripcion
+    + getEstadoInscripcion(hoy : LocalDate) : EstadoInscripcion
+    + calcularIMC(pesoKg : double, alturaM : double) : double
+    + getRol() : String
+    + compareTo(o : Miembro) : int
+    + {abstract} getTipo() : String
+    + {abstract} getPorcentajeDescuento() : double
+    .. pendiente (Sprint 3) ..
+    - fechaRegistro : LocalDate
+    - pesoKg : double
+    - alturaM : double
+    - activo : boolean
+    - entrenador : Entrenador
+    - historialRutinas : ArrayList<Rutina>
+    + asignarRutina(r : Rutina) : void
+    + getRutinaActual() : Rutina
+  }
+
+  class MiembroRegular #E8F5E9 {
+    + getTipo() : String
+    + getPorcentajeDescuento() : double
+  }
+  class MiembroEstudiante #E8F5E9 {
+    - universidad : String
+    - codigoUniversitario : String
+    + getTipo() : String
+    + getPorcentajeDescuento() : double
+  }
+  class MiembroCorporativo #E8F5E9 {
+    - empresa : String
+    - ruc : String
+    + getTipo() : String
+    + getPorcentajeDescuento() : double
+  }
+
+  class Entrenador #E8F5E9 {
+    - codigo : String
+    - {static} MAX_MIEMBROS : int = 15
+    - sueldoBase : double
+    - turno : Turno
+    - especialidades : ArrayList<Especialidad>
+    - miembrosAsignados : ArrayList<Miembro>
+    - disponibilidad : boolean[7][3]
+    --
+    + agregarEspecialidad(e : Especialidad) : Entrenador
+    + tieneEspecialidad(e : Especialidad) : boolean
+    + puedeAceptarMiembro() : boolean
+    + asignarMiembro(m : Miembro) : void
+    + retirarMiembro(m : Miembro) : boolean
+    + setDisponible(d : DiaSemana, t : Turno, v : boolean) : void
+    + estaDisponible(d : DiaSemana, t : Turno) : boolean
+    + calcularSueldo() : double
+    + getRol() : String
+    + compareTo(o : Entrenador) : int
+  }
+
+  class Usuario <<Serializable>> #E8F5E9 {
+    + {static} MODULO_DASHBOARD : String
+    + {static} MODULO_MIEMBROS : String
+    + {static} MODULO_PLANES_PAGOS : String
+    + {static} MODULO_ENTRENADORES : String
+    + {static} MODULO_RUTINAS : String
+    + {static} MODULO_REPORTES : String
+    + {static} MODULO_ARCHIVO : String
+    + {static} MODULO_BASE_DATOS : String
+    - username : String
+    - password : String
+    - rol : Rol
+    - persona : Persona
+    --
+    + Usuario(username, password, rol : Rol)
+    + Usuario(username, password, rol : Rol, persona : Persona)
+    + autenticar(user : String, pass : String) : boolean
+    + puedeAcceder(modulo : String) : boolean
+    + getUsername() : String
+    + getRol() : Rol
+    + getPersona() : Persona
+    + toString() : String
+  }
+}
+
+' ======================= MEMBRESÍAS ==========================
+package "modelo.membresia" {
+  interface Reportable <<interface>> #E8F5E9 {
+    + generarLineaReporte() : String
+  }
+  abstract class Plan <<Serializable>> #E8F5E9 {
+    - codigo : String
+    - nombre : String
+    - precioMensual : double
+    - descripcion : String
+    - activo : boolean
+    --
+    + {abstract} getDuracionMeses() : int
+    + {abstract} getDescuentoPlan() : double
+    + calcularImporte() : double
+    + calcularFechaFin(inicio : LocalDate) : LocalDate
+    + generarLineaReporte() : String
+    + toString() : String
+  }
+  class PlanMensual #E8F5E9 {
+    + getDuracionMeses() : int
+    + getDescuentoPlan() : double
+  }
+  class PlanTrimestral #E8F5E9 {
+    + getDuracionMeses() : int
+    + getDescuentoPlan() : double
+  }
+  class PlanAnual #E8F5E9 {
+    - incluyeEvaluacionNutricional : boolean
+    + getDuracionMeses() : int
+    + getDescuentoPlan() : double
+    + toString() : String
+  }
+
+  class Membresia <<Serializable>> #E8F5E9 {
+    - codigo : String
+    - miembro : Miembro
+    - plan : Plan
+    - fechaInicio : LocalDate
+    - fechaFin : LocalDate
+    - estado : EstadoMembresia
+    - pago : Pago
+    --
+    + Membresia(miembro, plan, fechaInicio)
+    + actualizarEstado(hoy : LocalDate) : void
+    + estaVigente(hoy : LocalDate) : boolean
+    + estaVencida(hoy : LocalDate) : boolean
+    + venceEnLosProximos(dias : int, hoy : LocalDate) : boolean
+    + diasRestantes(hoy : LocalDate) : long
+    + cancelar() : void
+    + compareTo(o : Membresia) : int
+  }
+
+  class Pago <<Serializable>> #E8F5E9 {
+    - codigo : String
+    - fecha : LocalDate
+    - montoPlan : double
+    - descuento : double
+    - matricula : double
+    - recargo : double
+    - total : double
+    - metodo : MetodoPago
+    - {static} MATRICULA : double = 50.0
+    --
+    + Pago(m : Membresia, metodo : MetodoPago, primeraVez : boolean)
+    + calcularTotal() : double
+    + generarComprobante() : String
+    + generarLineaReporte() : String
+  }
+}
+
+' ======================= ENTRENAMIENTO =======================
+package "modelo.entrenamiento" {
+  class Ejercicio <<Serializable>> #E8F5E9 {
+    - codigo : String
+    - nombre : String
+    - grupoMuscular : GrupoMuscular
+    - equipo : String
+    - descripcion : String
+    + toString() : String
+    + equals(o : Object) : boolean
+  }
+
+  class DetalleRutina <<Serializable>> #E8F5E9 {
+    - ejercicio : Ejercicio
+    - dia : DiaSemana
+    - series : int
+    - repeticiones : int
+    - pesoKg : double
+    - descansoSeg : int
+    --
+    + DetalleRutina(ej, dia, series, reps)
+    + DetalleRutina(ej, dia, series, reps, peso, descanso)
+    + calcularVolumen() : double
+    + toString() : String
+  }
+
+  class Rutina <<Serializable>> #E8F5E9 {
+    - codigo : String
+    - nombre : String
+    - objetivo : Objetivo
+    - miembro : Miembro
+    - entrenador : Entrenador
+    - fechaCreacion : LocalDate
+    - activa : boolean
+    - {static} MAX_EJERCICIOS : int = 20
+    - detalles : DetalleRutina[]
+    - numDetalles : int
+    --
+    + agregarEjercicio(e : Ejercicio, d : DiaSemana, series : int, reps : int) : Rutina
+    + eliminarEjercicio(indice : int) : boolean
+    + buscarEjercicio(nombre : String) : int
+    + ordenarPorDia() : void
+    + getEjerciciosDelDia(d : DiaSemana) : DetalleRutina[]
+    + getDetalles() : DetalleRutina[]
+    + estaLlena() : boolean
+    + calcularVolumenTotal() : double
+    + archivar() : void
+    + generarTextoImprimible() : String
+  }
+}
+
+' ======================= SERVICIO ============================
+package "servicio" #F3EEFA {
+  class Gimnasio <<Serializable>> #E8F5E9 {
+    - nombre : String
+    - ruc : String
+    - direccion : String
+    - miembros : HashMap<String, Miembro>
+    - planes : ArrayList<Plan>
+    - membresias : ArrayList<Membresia>
+    - pagos : ArrayList<Pago>
+    - usuarios : ArrayList<Usuario>
+    - contadorMembresias : int
+    - contadorPagos : int
+    --
+    + registrarMiembro(m : Miembro) : void
+    + buscarMiembro(dni : String) : Miembro
+    + buscarMiembro(nombres : String, apellidos : String) : Miembro
+    + listarMiembros() : ArrayList<Miembro>
+    + listarMiembrosActivos() : ArrayList<Miembro>
+    + crearPlan(p : Plan) : void
+    + buscarPlan(codigo : String) : Plan
+    + listarPlanes() : ArrayList<Plan>
+    + contratarMembresia(dni, codPlan, metodo : MetodoPago) : Pago
+    + renovarMembresia(dni, codPlan, metodo : MetodoPago) : Pago
+    + calcularImporte(m : Miembro, p : Plan, mp : MetodoPago) : double
+    + actualizarEstadosMembresias() : int
+    + getMembresiasVencidas() : ArrayList<Membresia>
+    + getMembresiasProximasAVencer(dias : int) : ArrayList<Membresia>
+    + registrarUsuario(u : Usuario) : void
+    + iniciarSesion(user : String, pass : String) : Usuario
+    + getUsuarios() : ArrayList<Usuario>
+    + getMembresias() : ArrayList<Membresia>
+    + getPagos() : ArrayList<Pago>
+    .. pendiente (Sprint 3) ..
+    - entrenadores : HashMap<String, Entrenador>
+    - catalogoEjercicios : ArrayList<Ejercicio>
+    + actualizarMiembro(m : Miembro) : void
+    + darDeBajaMiembro(dni : String) : void
+    + registrarEntrenador(e : Entrenador) : void
+    + buscarEntrenadoresPorEspecialidad(e : Especialidad) : ArrayList<Entrenador>
+    + asignarEntrenador(dni : String, codEntrenador : String) : void
+    + agregarEjercicioCatalogo(e : Ejercicio) : void
+    + crearRutina(dni : String, nombre : String, obj : Objetivo) : Rutina
+  }
+
+  class ServicioReportes {
+    - gimnasio : Gimnasio
+    - {static} MESES : String[]
+    --
+    + ingresosPorPeriodo(desde : LocalDate, hasta : LocalDate) : double
+    + ingresosPorPeriodo(mes : int, anio : int) : double
+    + ingresosMensuales(anio : int) : double[]
+    + matrizIngresos(anio : int) : double[][]
+    + planesMasSolicitados() : HashMap<String, Integer>
+    + rankingPlanes() : ArrayList<String>
+    + rankingEntrenadores() : ArrayList<Entrenador>
+    + resumenGeneral() : String
+    + generarReporteIngresos(desde : LocalDate, hasta : LocalDate) : String
+  }
+}
+
+' ======================= UTILIDADES ==========================
+package "util" {
+  class Ordenamiento <<utility>> #E8F5E9 {
+    + {static} ordenarPorApellido(a : Miembro[], n : int) : void
+    + {static} ordenarPorVencimiento(a : Membresia[], n : int) : void
+    + {static} ordenarPorDni(a : Miembro[], n : int) : void
+    + {static} ordenarDescendente(v : double[], etiquetas : String[]) : void
+  }
+  class Busqueda <<utility>> #E8F5E9 {
+    + {static} busquedaLineal(a : Miembro[], n : int, apellido : String) : int
+    + {static} busquedaBinaria(a : Miembro[], n : int, dni : String) : int
+  }
+  class Validador <<utility>> #E8F5E9 {
+    + {static} validarDni(dni : String) : void
+    + {static} validarEmail(email : String) : void
+    + {static} validarTelefono(tel : String) : void
+    + {static} validarRango(v : int, min : int, max : int, campo : String) : void
+  }
+  class Formato <<utility>> {
+    + {static} moneda(monto : double) : String
+    + {static} fecha(f : LocalDate) : String
+  }
+  class GeneradorCodigo <<utility>> {
+    - {static} contadores : HashMap<String, Integer>
+    + {static} siguiente(prefijo : String) : String
+  }
+}
+
+' ======================= EXCEPCIONES =========================
+package "excepciones" #FBEEEE {
+  class GimnasioException #E8F5E9
+  class DatosInvalidosException #E8F5E9
+  class MiembroNoEncontradoException #E8F5E9
+  class MembresiaActivaException #E8F5E9
+  class EntrenadorSinCupoException #E8F5E9
+  class RutinaLlenaException #E8F5E9
+  class PersistenciaException #E8F5E9
+  class Exception <<java.lang>>
+}
+
+' ======================= PERSISTENCIA ========================
+package "persistencia" #EEF4FB {
+  interface "DAO<T>" as DAO <<interface>> {
+    + insertar(obj : T) : boolean
+    + actualizar(obj : T) : boolean
+    + eliminar(id : String) : boolean
+    + buscarPorId(id : String) : T
+    + listarTodos() : ArrayList<T>
+  }
+  interface Persistencia <<interface>> {
+    + guardar(g : Gimnasio) : void
+    + cargar() : Gimnasio
+  }
+  class ArchivoTexto {
+    + exportarMiembrosCSV(lista : ArrayList<Miembro>, ruta : String) : void
+    + importarMiembrosCSV(ruta : String) : ArrayList<Miembro>
+    + escribirTexto(contenido : String, ruta : String) : void
+  }
+  class ArchivoBinario {
+    - ruta : String
+    + registrarPago(p : Pago) : void
+    + leerPagos() : ArrayList<String>
+  }
+  class PersistenciaObjetos {
+    - ruta : String
+    + guardar(g : Gimnasio) : void
+    + cargar() : Gimnasio
+  }
+  class ConexionBD <<Singleton>> {
+    - {static} instancia : ConexionBD
+    - {static} URL : String
+    - {static} USUARIO : String
+    - {static} CLAVE : String
+    - conexion : Connection
+    - ConexionBD()
+    + {static} getInstancia() : ConexionBD
+    + getConexion() : Connection
+    + cerrar() : void
+  }
+  class MiembroDAO
+  class EntrenadorDAO
+  class PlanDAO
+  class MembresiaDAO
+  class PagoDAO
+  class RutinaDAO
+  class EjercicioDAO
+  class PersistenciaBD {
+    + guardar(g : Gimnasio) : void
+    + cargar() : Gimnasio
+  }
+}
+
+' ======================= GUI (Swing) =========================
+package "gui" #F7F7F7 {
+  class VentanaLogin <<final>> #E8F5E9 {
+    - gimnasio : Gimnasio
+    - alIngresar : Consumer<Usuario>
+    - txtUsuario : JTextField
+    - txtClave : JPasswordField
+    - btnIngresar : JButton
+    + VentanaLogin(g : Gimnasio, alIngresar : Consumer<Usuario>)
+  }
+  class "VentanaLogin.ControladorIngresar" as ControladorIngresar #E8F5E9 {
+    + actionPerformed(e : ActionEvent) : void
+  }
+  class VentanaPrincipal <<final>> #E8F5E9 {
+    - {static} PESTANAS : String[][]
+    - usuario : Usuario
+    - pestanas : JTabbedPane
+    - lblReloj : JLabel
+    + VentanaPrincipal(g : Gimnasio, u : Usuario)
+    + getTitulosPestanas() : String[]
+    - crearMenu() : JMenuBar
+    - crearPestanas() : void
+    - crearBarraEstado() : JPanel
+    - actualizarReloj() : void
+  }
+  interface ActionListener <<java.awt.event>>
+  class PanelDashboard
+  class PanelMiembros
+  class PanelPlanesPagos
+  class PanelEntrenadores
+  class PanelRutinas
+  class PanelReportes
+  class DialogoMiembro
+  class MiembroTableModel {
+    + getRowCount() : int
+    + getColumnCount() : int
+    + getValueAt(f : int, c : int) : Object
+  }
+  class EstadoCellRenderer {
+    + getTableCellRendererComponent(...) : Component
+  }
+  class GraficoBarras {
+    - valores : double[]
+    - etiquetas : String[]
+    # paintComponent(g : Graphics) : void
+  }
+  class JFrame <<javax.swing>>
+  class JPanel <<javax.swing>>
+  class JDialog <<javax.swing>>
+  class AbstractTableModel <<javax.swing.table>>
+  class DefaultTableCellRenderer <<javax.swing.table>>
+}
+
+package "app" {
+  class Main #E8F5E9 {
+    + {static} main(args : String[]) : void
+    - {static} registrarUsuariosDePrueba(g : Gimnasio) : void
+    - {static} iniciarSesion(g : Gimnasio, u : Usuario) : void
+    - {static} abrirMenuConsola(g : Gimnasio, u : Usuario) : void
+  }
+  class MenuConsola #E8F5E9 {
+    - gimnasio : Gimnasio
+    - entrada : Scanner
+    + MenuConsola(g : Gimnasio)
+    + MenuConsola(g : Gimnasio, entrada : Scanner)
+    + iniciar() : void
+    - contratarMembresia() : void
+    - mostrarFicha(m : Miembro) : void
+    - verVencimientos() : void
+  }
+}
+
+' ============================================================
+'                        RELACIONES
+'  (las flechas --> no influyen en la distribución:
+'   se usan para dependencias entre capas y así el diagrama
+'   queda compacto)
+' ============================================================
+
+' ---- Herencia ----
+Persona <|-- Miembro
+Persona <|-- Entrenador
+Miembro <|-- MiembroRegular
+Miembro <|-- MiembroEstudiante
+Miembro <|-- MiembroCorporativo
+Plan <|-- PlanMensual
+Plan <|-- PlanTrimestral
+Plan <|-- PlanAnual
+
+Exception <|-- GimnasioException
+GimnasioException <|-- DatosInvalidosException
+GimnasioException <|-- MiembroNoEncontradoException
+GimnasioException <|-- PersistenciaException
+
+JFrame <|-- VentanaLogin
+JFrame <|-- VentanaPrincipal
+JPanel <|-- PanelDashboard
+JPanel <|-- PanelMiembros
+JPanel <|-- PanelPlanesPagos
+JPanel <|-- PanelEntrenadores
+JPanel <|-- PanelRutinas
+JPanel <|-- PanelReportes
+JPanel <|-- GraficoBarras
+JDialog <|-- DialogoMiembro
+AbstractTableModel <|-- MiembroTableModel
+DefaultTableCellRenderer <|-- EstadoCellRenderer
+
+' ---- Realización de interfaces ----
+Descontable <|.. Miembro
+Reportable <|.. Plan
+Reportable <|.. Pago
+DAO <|.. MiembroDAO
+DAO <|.. EntrenadorDAO
+DAO <|.. PlanDAO
+DAO <|.. MembresiaDAO
+DAO <|.. PagoDAO
+DAO <|.. RutinaDAO
+DAO <|.. EjercicioDAO
+Persistencia <|.. PersistenciaObjetos
+Persistencia <|.. PersistenciaBD
+
+' ---- Composición ----
+Miembro "1" *-- "0..*" Membresia : historialMembresias
+Membresia "1" *-- "1" Pago : pago
+Miembro "1" *-- "0..*" Rutina : historialRutinas
+Rutina "1" *-- "0..20" DetalleRutina : detalles[]
+
+' ---- Agregación ----
+Gimnasio "1" o-- "0..*" Miembro : miembros
+Gimnasio "1" o-- "0..*" Entrenador : entrenadores
+Gimnasio "1" o-- "1..*" Plan : planes
+Gimnasio "1" o-- "0..*" Ejercicio : catalogo
+Gimnasio "1" o-- "1..*" Usuario : usuarios
+Entrenador "0..1" o-- "0..15" Miembro : miembrosAsignados
+Membresia "0..*" o-- "1" Plan : plan
+DetalleRutina "0..*" o-- "1" Ejercicio : ejercicio
+
+' ---- Asociación ----
+Rutina "0..*" --> "1" Entrenador : creadaPor
+Usuario "0..1" --> "0..1" Persona : persona
+
+' ---- Dependencias entre capas ----
+ServicioReportes --> "1" Gimnasio
+PersistenciaBD --> ConexionBD
+PersistenciaBD ..> DAO : usa
+
+VentanaLogin +-- ControladorIngresar
+ActionListener <|.. ControladorIngresar
+VentanaLogin ..> Gimnasio : iniciarSesion
+VentanaPrincipal ..> Usuario : puedeAcceder
+VentanaPrincipal *-- PanelDashboard
+VentanaPrincipal *-- PanelMiembros
+VentanaPrincipal *-- PanelPlanesPagos
+VentanaPrincipal *-- PanelEntrenadores
+VentanaPrincipal *-- PanelRutinas
+VentanaPrincipal *-- PanelReportes
+PanelMiembros *-- MiembroTableModel
+PanelMiembros ..> DialogoMiembro
+PanelMiembros ..> EstadoCellRenderer
+PanelDashboard *-- GraficoBarras
+VentanaPrincipal --> Persistencia
+PanelReportes --> ServicioReportes
+
+Main ..> VentanaLogin : abre
+Main ..> VentanaPrincipal : abre al ingresar
+Main ..> MenuConsola
+MenuConsola --> Gimnasio
+
+' ---- Distribución compacta (enlaces ocultos) ----
+EstadoMembresia -[hidden]right- EstadoInscripcion
+MembresiaDAO -[hidden]down- EstadoMembresia
+EstadoInscripcion -[hidden]right- MetodoPago
+MetodoPago -[hidden]right- Rol
+Rol -[hidden]right- Turno
+EstadoMembresia -[hidden]down- Especialidad
+Especialidad -[hidden]right- GrupoMuscular
+GrupoMuscular -[hidden]right- Objetivo
+Objetivo -[hidden]right- DiaSemana
+Validador -[hidden]right- Busqueda
+Busqueda -[hidden]right- Formato
+Validador -[hidden]down- Ordenamiento
+Ordenamiento -[hidden]right- GeneradorCodigo
+GimnasioException <|--- EntrenadorSinCupoException
+GimnasioException <|--- RutinaLlenaException
+GimnasioException <|--- MembresiaActivaException
+
+note as N1
+  <b>Dependencias de uso entre capas</b>
+  * Gimnasio usa Validador, Busqueda y GeneradorCodigo
+  * ServicioReportes usa Ordenamiento y Formato
+  * Gimnasio y los DAO lanzan excepciones de GimnasioException
+  * PersistenciaObjetos / PersistenciaBD guardan y cargan Gimnasio
+  * PanelMiembros usa ArchivoTexto (importar / exportar CSV)
+  * MenuConsola usa Gimnasio (versión de consola)
+end note
+
+legend top right
+  <b>Estado al Sprint 2 (v0.2)</b>
+  <back:#E8F5E9>   verde   </back> implementado
+  <back:#FEFEFE>   blanco   </back> planificado (Sprint 3 a 5)
+  ".. pendiente .." = miembros que todavía no están en el código
+endlegend
+
+@enduml

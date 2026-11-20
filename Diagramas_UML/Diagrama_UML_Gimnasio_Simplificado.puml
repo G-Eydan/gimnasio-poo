@@ -1,0 +1,190 @@
+@startuml Diagrama_UML_Gimnasio_Simplificado
+' ============================================================
+'  GymPro - Diagrama de clases SIMPLIFICADO (modelo del negocio)
+'  Versión resumida para exposición: sólo las clases del dominio
+'  con sus atributos y métodos principales.
+'  El diagrama completo está en Diagrama_UML_Gimnasio.puml
+' ============================================================
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam defaultFontSize 13
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #3B5B8C
+  ArrowColor #333333
+  HeaderBackgroundColor #DCE6F4
+}
+skinparam package {
+  BackgroundColor #F7F9FC
+  BorderColor #9AB0D0
+}
+hide empty members
+title GymPro - Modelo del negocio (diagrama simplificado, actualizado al Sprint 2)
+
+class Gimnasio {
+  - miembros : HashMap<String, Miembro>
+  - entrenadores : HashMap<String, Entrenador>
+  - planes : ArrayList<Plan>
+  - catalogoEjercicios : ArrayList<Ejercicio>
+  - usuarios : ArrayList<Usuario>
+  --
+  + registrarMiembro(m : Miembro)
+  + contratarMembresia(dni, codPlan, metodo) : Pago
+  + renovarMembresia(dni, codPlan, metodo) : Pago
+  + getMembresiasVencidas() : ArrayList<Membresia>
+  + getMembresiasProximasAVencer(dias) : ArrayList<Membresia>
+  + iniciarSesion(user, pass) : Usuario
+  + asignarEntrenador(dni, codEntrenador)
+  + crearRutina(dni, nombre, objetivo) : Rutina
+}
+
+class Usuario {
+  - username : String
+  - password : String
+  - rol : Rol
+  + autenticar(user, pass) : boolean
+  + puedeAcceder(modulo) : boolean
+}
+
+class ServicioReportes {
+  + ingresosPorPeriodo(desde, hasta) : double
+  + matrizIngresos(anio) : double[][]
+  + planesMasSolicitados() : HashMap<String, Integer>
+}
+
+package "Personas" {
+  abstract class Persona {
+    # dni : String
+    # nombres : String
+    # apellidos : String
+    + getNombreCompleto() : String
+    + {abstract} getRol() : String
+  }
+
+  interface Descontable <<interface>> {
+    + getPorcentajeDescuento() : double
+  }
+
+  abstract class Miembro {
+    - codigo : String
+    - pesoKg : double
+    - alturaM : double
+    + getEstadoInscripcion() : EstadoInscripcion
+    + getMembresiaVigente() : Membresia
+    + getFechaVencimiento() : LocalDate
+    + getDiasRestantes() : long
+    + getHistorialOrdenado() : ArrayList<Membresia>
+    + calcularIMC(pesoKg, alturaM) : double
+  }
+
+  class Entrenador {
+    - especialidades : ArrayList<Especialidad>
+    - disponibilidad : boolean[7][3]
+    - {static} MAX_MIEMBROS : int = 15
+    + asignarMiembro(m : Miembro)
+    + calcularSueldo() : double
+  }
+
+  class MiembroRegular <<0 %>>
+  class MiembroEstudiante <<15 %>> {
+    - universidad : String
+  }
+  class MiembroCorporativo <<20 %>> {
+    - empresa : String
+  }
+}
+
+package "Planes y pagos" {
+  abstract class Plan {
+    - nombre : String
+    - precioMensual : double
+    + {abstract} getDuracionMeses() : int
+    + {abstract} getDescuentoPlan() : double
+    + calcularImporte() : double
+  }
+  class PlanMensual <<1 mes>>
+  class PlanTrimestral <<3 meses, -10 %>>
+  class PlanAnual <<12 meses, -20 %>>
+
+  class Membresia {
+    - fechaInicio : LocalDate
+    - fechaFin : LocalDate
+    - estado : EstadoMembresia
+    + estaVencida(hoy) : boolean
+    + diasRestantes(hoy) : long
+  }
+
+  class Pago {
+    - fecha : LocalDate
+    - total : double
+    - metodo : MetodoPago
+    + calcularTotal() : double
+    + generarComprobante() : String
+  }
+}
+
+package "Entrenamiento" {
+  class Rutina {
+    - nombre : String
+    - objetivo : Objetivo
+    - detalles : DetalleRutina[20]
+    - numDetalles : int
+    + agregarEjercicio(...) : Rutina
+    + eliminarEjercicio(i : int)
+    + ordenarPorDia()
+  }
+  class DetalleRutina {
+    - dia : DiaSemana
+    - series : int
+    - repeticiones : int
+    - pesoKg : double
+  }
+  class Ejercicio {
+    - nombre : String
+    - grupoMuscular : GrupoMuscular
+  }
+}
+
+' ---------------- Relaciones ----------------
+ServicioReportes --> Gimnasio
+
+Gimnasio "1" o-- "*" Miembro
+Gimnasio "1" o-- "*" Entrenador
+Gimnasio "1" o-- "*" Plan
+Gimnasio "1" o-- "*" Ejercicio
+Gimnasio "1" o-- "1..*" Usuario
+Usuario "0..1" --> "0..1" Persona : persona
+
+Persona <|-- Miembro
+Persona <|-- Entrenador
+Descontable <|.. Miembro
+Miembro <|-- MiembroRegular
+Miembro <|-- MiembroEstudiante
+Miembro <|-- MiembroCorporativo
+
+Entrenador "0..1" o-- "0..15" Miembro : asignados
+
+Miembro "1" *-- "*" Membresia : historial
+Membresia "*" o-- "1" Plan
+Membresia "1" *-- "1" Pago
+Plan <|-- PlanMensual
+Plan <|-- PlanTrimestral
+Plan <|-- PlanAnual
+
+Miembro "1" *-- "*" Rutina : historial
+Rutina "*" --> "1" Entrenador : creadaPor
+Rutina "1" *-- "0..20" DetalleRutina
+DetalleRutina "*" o-- "1" Ejercicio
+
+legend right
+  <b>Leyenda</b>
+  Triángulo + línea continua : herencia
+  Triángulo + línea punteada : implementa interface
+  Rombo relleno : composición
+  Rombo vacío : agregación
+  Flecha simple : asociación
+endlegend
+
+@enduml

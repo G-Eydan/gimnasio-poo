@@ -1,7 +1,11 @@
 package gympro.app;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
+import gympro.modelo.enums.MetodoPago;
+import gympro.modelo.membresia.Membresia;
+import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.membresia.PlanAnual;
 import gympro.modelo.membresia.PlanMensual;
@@ -18,11 +22,16 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Locale;
 import java.util.Scanner;
 
 /**
- * Menú de consola del Sprint 1 (HU-01 y HU-04): registrar, buscar y listar
- * miembros, y crear y listar planes. En el Sprint 3 se reemplaza por la GUI.
+ * Menú de consola: registrar, buscar y listar miembros, crear y listar planes
+ * (Sprint 1: HU-01 y HU-04), contratar o renovar membresías y ver la ficha del
+ * miembro con su estado e historial, y ver las membresías vencidas y por vencer
+ * (Sprint 2: HU-02, HU-03 y HU-05).
+ * En el Sprint 3 se reemplaza por la GUI.
  *
  * <p>Toda la lógica está en {@link Gimnasio}; esta clase solo pide los datos,
  * llama al servicio y muestra el resultado o el mensaje de error.</p>
@@ -35,6 +44,8 @@ public class MenuConsola
     private static final DateTimeFormatter FORMATO_FECHA =
             DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
     private static final String SEPARADOR = "------------------------------------------------------------";
+    /** N por defecto para "próximas a vencer" (HU-05). */
+    private static final int DIAS_POR_VENCER = 7;
 
     private final Gimnasio gimnasio;
     private final Scanner entrada;
@@ -52,9 +63,18 @@ public class MenuConsola
         this.entrada = entrada;
     }
 
-    /** Muestra el menú hasta que el usuario elige salir. */
+    /**
+     * Muestra el menú hasta que el usuario elige salir. Al iniciar actualiza los estados
+     * de las membresías (HU-05: "al iniciar el sistema se actualizan los estados").
+     */
     public void iniciar()
     {
+        int vencidas = gimnasio.actualizarEstadosMembresias();
+        if (vencidas > 0)
+        {
+            System.out.println("Estados actualizados: " + vencidas + " membresías vencieron.");
+        }
+
         int opcion;
         do
         {
@@ -68,6 +88,8 @@ public class MenuConsola
                 case 3 -> listarMiembros();
                 case 4 -> crearPlan();
                 case 5 -> listarPlanes();
+                case 6 -> contratarMembresia();
+                case 7 -> verVencimientos();
                 case 0 -> System.out.println("Hasta pronto.");
                 default -> System.out.println("Opción no válida.");
             }
@@ -84,6 +106,8 @@ public class MenuConsola
         System.out.println("3. Listar miembros");
         System.out.println("4. Crear plan");
         System.out.println("5. Listar planes");
+        System.out.println("6. Contratar / renovar membresía");
+        System.out.println("7. Ver membresías vencidas y por vencer");
         System.out.println("0. Salir");
     }
 
@@ -154,22 +178,58 @@ public class MenuConsola
         String dni = leerTexto("DNI: ");
         try
         {
-            Miembro m = gimnasio.buscarMiembro(dni);
-            System.out.println(SEPARADOR);
-            System.out.println("Código     : " + m.getCodigo());
-            System.out.println("Nombre     : " + m.getNombreCompleto());
-            System.out.println("DNI        : " + m.getDni());
-            System.out.println("Tipo       : " + m.getTipo()
-                    + " (descuento " + Math.round(m.getPorcentajeDescuento() * 100) + " %)");
-            System.out.println("Teléfono   : " + m.getTelefono());
-            System.out.println("Email      : " + m.getEmail());
-            System.out.println("Inscripción: " + m.getEstadoInscripcion());
-            System.out.println(SEPARADOR);
+            gimnasio.actualizarEstadosMembresias();
+            mostrarFicha(gimnasio.buscarMiembro(dni));
         }
         catch (MiembroNoEncontradoException e)
         {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Ficha del miembro (HU-03): datos personales, estado de inscripción, fecha de
+     * vencimiento, días restantes e historial de membresías ordenado por fecha de inicio.
+     */
+    private void mostrarFicha(Miembro m)
+    {
+        System.out.println(SEPARADOR);
+        System.out.println("Código     : " + m.getCodigo());
+        System.out.println("Nombre     : " + m.getNombreCompleto());
+        System.out.println("DNI        : " + m.getDni());
+        System.out.println("Tipo       : " + m.getTipo()
+                + " (descuento " + Math.round(m.getPorcentajeDescuento() * 100) + " %)");
+        System.out.println("Teléfono   : " + m.getTelefono());
+        System.out.println("Email      : " + m.getEmail());
+        System.out.println("Inscripción: " + m.getEstadoInscripcion());
+
+        Membresia actual = m.getMembresiaActual();
+        if (actual != null)
+        {
+            System.out.println("Vence      : " + actual.getFechaFin().format(FORMATO_FECHA));
+            System.out.println("Días rest. : " + m.getDiasRestantes());
+        }
+
+        System.out.println();
+        System.out.println("Historial de membresías:");
+        ArrayList<Membresia> historial = m.getHistorialMembresias();
+        if (historial.isEmpty())
+        {
+            System.out.println("  (sin membresías)");
+        }
+        else
+        {
+            historial.sort(Comparator.comparing(Membresia::getFechaInicio));
+            System.out.printf("  %-7s %-18s %-10s %-10s %-10s%n", "Código", "Plan", "Inicio", "Fin", "Estado");
+            for (Membresia mem : historial)
+            {
+                System.out.printf("  %-7s %-18s %-10s %-10s %-10s%n", mem.getCodigo(),
+                        recortar(mem.getPlan().getNombre(), 18),
+                        mem.getFechaInicio().format(FORMATO_FECHA),
+                        mem.getFechaFin().format(FORMATO_FECHA), mem.getEstado());
+            }
+        }
+        System.out.println(SEPARADOR);
     }
 
     private void listarMiembros()
@@ -246,8 +306,164 @@ public class MenuConsola
     }
 
     // ------------------------------------------------------------------
+    // Membresías (HU-02)
+    // ------------------------------------------------------------------
+
+    /**
+     * Contrata una membresía: pide miembro, plan y método de pago, muestra el total
+     * y, al confirmar, registra el pago y muestra el comprobante con el desglose.
+     * Si el miembro ya tiene una membresía vigente, ofrece renovarla (RN-06).
+     */
+    private void contratarMembresia()
+    {
+        System.out.println("--- Contratar / renovar membresía ---");
+        try
+        {
+            String dni = leerTexto("DNI del miembro: ");
+            Miembro miembro = gimnasio.buscarMiembro(dni);
+            System.out.println("Miembro: " + miembro.getNombreCompleto() + " (" + miembro.getTipo() + ")");
+            System.out.println();
+
+            if (gimnasio.listarPlanes().isEmpty())
+            {
+                System.out.println("No hay planes registrados. Cree uno con la opción 4.");
+                return;
+            }
+            listarPlanes();
+            String codPlan = leerTexto("Código del plan: ");
+            Plan plan = gimnasio.buscarPlan(codPlan);
+            if (plan == null)
+            {
+                System.out.println("Error: no existe un plan con el código " + codPlan + ".");
+                return;
+            }
+
+            MetodoPago metodo = leerMetodoPago();
+            if (metodo == null)
+            {
+                System.out.println("Método de pago no válido.");
+                return;
+            }
+
+            System.out.printf(Locale.US, "Total a pagar: S/ %.2f%n", gimnasio.calcularImporte(miembro, plan, metodo));
+            if (!confirmar("¿Confirmar el pago? (S/N): "))
+            {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+
+            Pago pago;
+            try
+            {
+                pago = gimnasio.contratarMembresia(dni, codPlan, metodo);
+            }
+            catch (MembresiaActivaException e)
+            {
+                System.out.println(e.getMessage());
+                if (!confirmar("¿Desea renovarla? La nueva empieza al terminar la vigente. (S/N): "))
+                {
+                    System.out.println("Operación cancelada.");
+                    return;
+                }
+                pago = gimnasio.renovarMembresia(dni, codPlan, metodo);
+            }
+            System.out.println();
+            System.out.print(pago.generarComprobante());
+            System.out.println("Estado de la membresía: " + pago.getMembresia().getEstado());
+        }
+        catch (MiembroNoEncontradoException | MembresiaActivaException | DatosInvalidosException e)
+        {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Vencimientos (HU-05)
+    // ------------------------------------------------------------------
+
+    /**
+     * Actualiza los estados y muestra las membresías vencidas y las que vencen en los
+     * próximos N días (N = 7 por defecto, configurable).
+     */
+    private void verVencimientos()
+    {
+        System.out.println("--- Membresías vencidas y por vencer ---");
+        String texto = leerTexto("Días para \"por vencer\" (Enter = " + DIAS_POR_VENCER + "): ");
+        int dias = DIAS_POR_VENCER;
+        if (!texto.isEmpty())
+        {
+            try
+            {
+                dias = Integer.parseInt(texto);
+            }
+            catch (NumberFormatException e)
+            {
+                dias = -1;
+            }
+            if (dias < 1)
+            {
+                System.out.println("Error: ingrese un número de días mayor que 0.");
+                return;
+            }
+        }
+
+        int nuevas = gimnasio.actualizarEstadosMembresias();
+        if (nuevas > 0)
+        {
+            System.out.println("Se marcaron " + nuevas + " membresías como vencidas.");
+        }
+        LocalDate hoy = LocalDate.now();
+
+        ArrayList<Membresia> vencidas = gimnasio.getMembresiasVencidas();
+        System.out.println();
+        System.out.println("Vencidas (" + vencidas.size() + "):");
+        imprimirMembresias(vencidas, hoy, "Días venc.");
+
+        ArrayList<Membresia> porVencer = gimnasio.getMembresiasProximasAVencer(dias);
+        System.out.println();
+        System.out.println("Vencen en los próximos " + dias + " días (" + porVencer.size() + "):");
+        imprimirMembresias(porVencer, hoy, "Días rest.");
+    }
+
+    /** Tabla de membresías; la última columna son los días desde o hasta la fecha de fin. */
+    private void imprimirMembresias(ArrayList<Membresia> lista, LocalDate hoy, String columnaDias)
+    {
+        if (lista.isEmpty())
+        {
+            System.out.println("  (ninguna)");
+            return;
+        }
+        System.out.printf("  %-7s %-24s %-16s %-10s %s%n", "Código", "Miembro", "Plan", "Fin", columnaDias);
+        for (Membresia m : lista)
+        {
+            System.out.printf("  %-7s %-24s %-16s %-10s %d%n", m.getCodigo(),
+                    recortar(m.getMiembro().getNombreCompleto(), 24), recortar(m.getPlan().getNombre(), 16),
+                    m.getFechaFin().format(FORMATO_FECHA), Math.abs(m.diasRestantes(hoy)));
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Lectura de datos
     // ------------------------------------------------------------------
+
+    /** Muestra los métodos de pago con su recargo y devuelve el elegido, o {@code null} si no es válido. */
+    private MetodoPago leerMetodoPago()
+    {
+        MetodoPago[] metodos = MetodoPago.values();
+        System.out.println("Método de pago:");
+        for (int i = 0; i < metodos.length; i++)
+        {
+            System.out.printf(Locale.US, "  %d. %s (recargo %.0f %%)%n", i + 1, metodos[i], metodos[i].getRecargo() * 100);
+        }
+        int opcion = leerEntero("Método: ");
+        return (opcion >= 1 && opcion <= metodos.length) ? metodos[opcion - 1] : null;
+    }
+
+    /** Devuelve {@code true} solo si el usuario responde S o s. */
+    private boolean confirmar(String mensaje)
+    {
+        return leerTexto(mensaje).equalsIgnoreCase("S");
+    }
 
     private String leerTexto(String mensaje)
     {

@@ -15,6 +15,8 @@ import gympro.modelo.persona.Miembro;
 import gympro.modelo.persona.MiembroCorporativo;
 import gympro.modelo.persona.MiembroEstudiante;
 import gympro.modelo.persona.MiembroRegular;
+import gympro.modelo.persona.Usuario;
+import gympro.modelo.enums.Rol;
 import gympro.servicio.Gimnasio;
 
 import java.time.LocalDate;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
 
 /**
  * Pruebas de la lógica de negocio de I1 (sin JUnit, para que corran con solo Java).
- * Cubren HU-04 y los casos CP-01 a CP-09 de la especificación.
+ * Cubren HU-04, HU-12 y los casos CP-01 a CP-09 y CP-18 de la especificación.
  *
  * Se ejecuta como cualquier clase con main (en IntelliJ: clic derecho, Run).
  */
@@ -75,14 +77,48 @@ public class PruebasLogicaNegocio {
         pruebaImportes();
         pruebaContratarYRenovar();
         pruebaVencimientos();
+        pruebaOrdenVencimientos();
         pruebaMiembrosYPlanes();
         pruebaComprobante();
+        pruebaUsuarios();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
         if (fallidas > 0) {
             System.exit(1);
         }
+    }
+
+    // HU-12 y CP-18
+    private static void pruebaUsuarios() throws Exception {
+        System.out.println("HU-12 - Usuarios y roles");
+        Gimnasio g = new Gimnasio("GymPro Test");
+        g.registrarUsuario(new Usuario("admin", "admin123", Rol.ADMINISTRADOR));
+        g.registrarUsuario(new Usuario("recepcion", "recepcion123", Rol.RECEPCIONISTA));
+        g.registrarUsuario(new Usuario("entrenador", "entrenador123", Rol.ENTRENADOR));
+
+        verificar("Login admin correcto", g.iniciarSesion("admin", "admin123").getRol() == Rol.ADMINISTRADOR);
+        verificar("Usuario sin distinguir mayúsculas", g.iniciarSesion("Recepcion", "recepcion123").getRol() == Rol.RECEPCIONISTA);
+        esperarExcepcion("Contraseña incorrecta", DatosInvalidosException.class,
+                () -> g.iniciarSesion("admin", "otra"));
+        esperarExcepcion("Contraseña distingue mayúsculas", DatosInvalidosException.class,
+                () -> g.iniciarSesion("admin", "ADMIN123"));
+        esperarExcepcion("Usuario inexistente", DatosInvalidosException.class,
+                () -> g.iniciarSesion("nadie", "admin123"));
+        esperarExcepcion("Usuario duplicado", DatosInvalidosException.class,
+                () -> g.registrarUsuario(new Usuario("ADMIN", "x", Rol.RECEPCIONISTA)));
+        esperarExcepcion("Usuario vacío", DatosInvalidosException.class,
+                () -> new Usuario(" ", "x", Rol.ADMINISTRADOR));
+
+        Usuario admin = g.iniciarSesion("admin", "admin123");
+        Usuario recepcion = g.iniciarSesion("recepcion", "recepcion123");
+        Usuario entrenador = g.iniciarSesion("entrenador", "entrenador123");
+        verificar("Admin accede a reportes", admin.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("Recepción accede a planes y pagos", recepcion.puedeAcceder(Usuario.MODULO_PLANES_PAGOS));
+        verificar("Recepción no accede a reportes", !recepcion.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("CP-18 entrenador no ve reportes", !entrenador.puedeAcceder(Usuario.MODULO_REPORTES));
+        verificar("Entrenador accede a rutinas", entrenador.puedeAcceder(Usuario.MODULO_RUTINAS));
+        verificar("toString no muestra la contraseña", !admin.toString().contains("admin123"));
     }
 
     // HU-04
@@ -125,12 +161,21 @@ public class PruebasLogicaNegocio {
         verificarMonto("Regular 1ra vez (con matrícula)", primera.getTotal(), 170.00);
         Pago segunda = g2.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 6, 1));
         verificarMonto("CP-04 total", segunda.getTotal(), 120.00);
+        verificarMonto("CP-04 importe del plan", segunda.getMontoPlan(), 120.00);
+        verificarMonto("CP-04 descuento", segunda.getDescuento(), 0.00);
         verificarMonto("CP-04 sin matrícula", segunda.getMatricula(), 0.00);
+        verificarMonto("CP-04 recargo", segunda.getRecargo(), 0.00);
+        verificarMonto("CP-04 calcularTotal()", segunda.calcularTotal(), 120.00);
 
         // CP-05: corporativo + anual + primera vez + Yape
         Gimnasio g3 = nuevoGimnasio();
         Pago p5 = g3.contratarMembresia("70000003", "PA", MetodoPago.YAPE_PLIN, LocalDate.of(2026, 11, 1));
         verificarMonto("CP-05 total", p5.getTotal(), 971.60);
+        verificarMonto("CP-05 importe del plan", p5.getMontoPlan(), 1152.00);
+        verificarMonto("CP-05 descuento", p5.getDescuento(), 230.40);
+        verificarMonto("CP-05 matrícula", p5.getMatricula(), 50.00);
+        verificarMonto("CP-05 recargo", p5.getRecargo(), 0.00);
+        verificarMonto("CP-05 calcularTotal()", p5.calcularTotal(), 971.60);
     }
 
     // CP-06, CP-07
@@ -199,8 +244,71 @@ public class PruebasLogicaNegocio {
         LocalDate hoy3 = LocalDate.of(2026, 6, 5);
         ArrayList<Membresia> vencidas = g3.getMembresiasVencidas(hoy3);
         verificar("Solo figura el miembro que no renovó", vencidas.size() == 1
-                && vencidas.get(0).getMiembro().getDni().equals("70000002"));
+                                                          && vencidas.get(0).getMiembro().getDni().equals("70000002"));
         verificar("Miembros activos = 1 (el que renovó)", g3.listarMiembrosActivos(hoy3).size() == 1);
+    }
+
+    /** True si la fecha de fin no decrece de una membresía a la siguiente. */
+    private static boolean ordenadasPorFin(ArrayList<Membresia> lista) {
+        for (int i = 0; i < lista.size() - 1; i++) {
+            if (lista.get(i).getFechaFin().isAfter(lista.get(i + 1).getFechaFin())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** DNI de los dueños de las membresías, en el orden en que vienen (para comparar el orden). */
+    private static String dnis(ArrayList<Membresia> lista) {
+        StringBuilder sb = new StringBuilder();
+        for (Membresia m : lista) {
+            sb.append(m.getMiembro().getDni()).append(' ');
+        }
+        return sb.toString().trim();
+    }
+
+    // HU-05: vencidas y próximas a vencer salen ordenadas por fecha de fin (inserción)
+    private static void pruebaOrdenVencimientos() throws Exception {
+        System.out.println("HU-05 - Orden de vencimientos");
+
+        // Vencidas contratadas deliberadamente desordenadas (fin: 14/11, 19/10, 04/11)
+        Gimnasio g = nuevoGimnasio();
+        g.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 10, 15));
+        g.contratarMembresia("70000002", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 9, 20));
+        g.contratarMembresia("70000003", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 10, 5));
+        ArrayList<Membresia> vencidas = g.getMembresiasVencidas(LocalDate.of(2026, 11, 20));
+        verificar("Vencidas: aparecen las 3", vencidas.size() == 3);
+        verificar("Vencidas: fechas de fin en orden cronológico", ordenadasPorFin(vencidas));
+        verificar("Vencidas: orden 19/10, 04/11, 14/11 (obtenido " + dnis(vencidas) + ")",
+                dnis(vencidas).equals("70000002 70000003 70000001"));
+
+        // Próximas a vencer contratadas desordenadas (fin: 30/11, 27/11, 29/11; hoy = 25/11)
+        Gimnasio g2 = nuevoGimnasio();
+        g2.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 11, 1));
+        g2.contratarMembresia("70000002", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 10, 28));
+        g2.contratarMembresia("70000003", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 10, 30));
+        ArrayList<Membresia> proximas = g2.getMembresiasProximasAVencer(7, LocalDate.of(2026, 11, 25));
+        verificar("Próximas: aparecen las 3", proximas.size() == 3);
+        verificar("Próximas: fechas de fin en orden cronológico", ordenadasPorFin(proximas));
+        verificar("Próximas: orden 27/11, 29/11, 30/11 (obtenido " + dnis(proximas) + ")",
+                dnis(proximas).equals("70000002 70000003 70000001"));
+
+        // Vencidas con una renovación: la membresía antigua no se repite y el resto sale ordenado
+        Gimnasio g3 = nuevoGimnasio();
+        g3.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 1, 1));  // fin 31/01 (ya renovó)
+        g3.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 6, 1));  // fin 30/06
+        g3.contratarMembresia("70000002", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 3, 1));  // fin 31/03
+        g3.contratarMembresia("70000003", "PM", MetodoPago.EFECTIVO, LocalDate.of(2026, 2, 1));  // fin 28/02
+        ArrayList<Membresia> vencidas3 = g3.getMembresiasVencidas(LocalDate.of(2026, 7, 10));
+        verificar("Vencidas con renovación: 3 membresías, sin repetir la antigua", vencidas3.size() == 3);
+        verificar("Vencidas con renovación: orden 28/02, 31/03, 30/06 (obtenido " + dnis(vencidas3) + ")",
+                dnis(vencidas3).equals("70000003 70000002 70000001"));
+
+        // Sin membresías: listas vacías y sin errores
+        Gimnasio vacio = nuevoGimnasio();
+        LocalDate hoy = LocalDate.of(2026, 11, 20);
+        verificar("Sin membresías: vencidas y próximas vacías",
+                vacio.getMembresiasVencidas(hoy).isEmpty() && vacio.getMembresiasProximasAVencer(7, hoy).isEmpty());
     }
 
     // HU-01 (parte de I1)

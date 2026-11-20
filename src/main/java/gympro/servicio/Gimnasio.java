@@ -16,6 +16,8 @@ import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.persona.Miembro;
+import gympro.modelo.persona.Usuario;
+import gympro.util.Ordenamiento;
 import gympro.util.Validador;
 
 /**
@@ -43,6 +45,7 @@ public class Gimnasio implements Serializable {
     private final ArrayList<Plan> planes = new ArrayList<>();
     private final ArrayList<Membresia> membresias = new ArrayList<>();
     private final ArrayList<Pago> pagos = new ArrayList<>();
+    private final ArrayList<Usuario> usuarios = new ArrayList<>();
 
     // Contadores de códigos (de instancia, para que se guarden con el respaldo .dat)
     private int contadorMembresias = 0;
@@ -182,8 +185,8 @@ public class Gimnasio implements Serializable {
         for (Membresia m : membresiasDe(miembro)) {
             if (m.estaVigente(hoy)) {
                 throw new MembresiaActivaException("El miembro " + miembro.getNombreCompleto()
-                        + " ya tiene una membresía vigente (vence el " + FORMATO.format(m.getFechaFin())
-                        + "). Use la opción renovar.");
+                                                   + " ya tiene una membresía vigente (vence el " + FORMATO.format(m.getFechaFin())
+                                                   + "). Use la opción renovar.");
             }
         }
         return registrar(miembro, plan, metodo, hoy, hoy);
@@ -215,8 +218,8 @@ public class Gimnasio implements Serializable {
             }
             if (hoy.isBefore(m.getFechaInicio())) {
                 throw new MembresiaActivaException("El miembro " + miembro.getNombreCompleto()
-                        + " ya tiene una renovación pendiente que inicia el "
-                        + FORMATO.format(m.getFechaInicio()) + ".");
+                                                   + " ya tiene una renovación pendiente que inicia el "
+                                                   + FORMATO.format(m.getFechaInicio()) + ".");
             }
             LocalDate diaSiguiente = m.getFechaFin().plusDays(1);
             if (diaSiguiente.isAfter(inicio)) {
@@ -250,7 +253,7 @@ public class Gimnasio implements Serializable {
     /**
      * Membresías vencidas, ordenadas por fecha de fin. Solo cuenta la última membresía de
      * cada miembro: si ya renovó, su membresía antigua no aparece como vencida.
-     * (Este orden se puede reemplazar por {@code Ordenamiento.ordenarPorVencimiento}, inserción.)
+     * El orden se hace con {@code Ordenamiento.ordenarPorVencimiento} (inserción).
      */
     public ArrayList<Membresia> getMembresiasVencidas() {
         return getMembresiasVencidas(LocalDate.now());
@@ -263,8 +266,7 @@ public class Gimnasio implements Serializable {
                 lista.add(m);
             }
         }
-        Collections.sort(lista);
-        return lista;
+        return ordenarVencimientos(lista);
     }
 
     /** Membresías que vencen en los próximos {@code dias} días (por defecto se usan 7). */
@@ -279,9 +281,46 @@ public class Gimnasio implements Serializable {
                 lista.add(m);
             }
         }
-        Collections.sort(lista);
-        return lista;
+        return ordenarVencimientos(lista);
     }
+
+    // ==================================================================
+    // Usuarios (HU-12)
+    // ==================================================================
+
+    /**
+     * Agrega un usuario del sistema.
+     *
+     * @throws DatosInvalidosException si es {@code null} o ya existe uno con ese nombre de usuario
+     */
+    public void registrarUsuario(Usuario usuario) throws DatosInvalidosException {
+        if (usuario == null) {
+            throw new DatosInvalidosException("El usuario no puede ser nulo.");
+        }
+        for (Usuario u : usuarios) {
+            if (u.getUsername().equalsIgnoreCase(usuario.getUsername())) {
+                throw new DatosInvalidosException("Ya existe el usuario " + usuario.getUsername() + ".");
+            }
+        }
+        usuarios.add(usuario);
+    }
+
+    /**
+     * Busca el usuario con esas credenciales.
+     *
+     * @return el usuario autenticado
+     * @throws DatosInvalidosException si el usuario o la contraseña son incorrectos
+     */
+    public Usuario iniciarSesion(String user, String pass) throws DatosInvalidosException {
+        for (Usuario u : usuarios) {
+            if (u.autenticar(user, pass)) {
+                return u;
+            }
+        }
+        throw new DatosInvalidosException("Usuario o contraseña incorrectos.");
+    }
+
+    public ArrayList<Usuario> getUsuarios() { return new ArrayList<>(usuarios); }
 
     // ==================================================================
     // Consultas (copias defensivas)
@@ -358,12 +397,26 @@ public class Gimnasio implements Serializable {
     private boolean esUltimaDelMiembro(Membresia m) {
         for (Membresia otra : membresias) {
             if (otra != m
-                    && otra.getMiembro().equals(m.getMiembro())
-                    && otra.getEstado() != EstadoMembresia.CANCELADA
-                    && otra.getFechaFin().isAfter(m.getFechaFin())) {
+                && otra.getMiembro().equals(m.getMiembro())
+                && otra.getEstado() != EstadoMembresia.CANCELADA
+                && otra.getFechaFin().isAfter(m.getFechaFin())) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Ordena por fecha de fin con la inserción de {@code Ordenamiento} (lista a arreglo y de vuelta).
+     * Devuelve una lista nueva; la recibida no se modifica.
+     */
+    private ArrayList<Membresia> ordenarVencimientos(ArrayList<Membresia> lista) {
+        Membresia[] arreglo = lista.toArray(new Membresia[0]);
+        Ordenamiento.ordenarPorVencimiento(arreglo, arreglo.length);
+        ArrayList<Membresia> ordenada = new ArrayList<>();
+        for (Membresia m : arreglo) {
+            ordenada.add(m);
+        }
+        return ordenada;
     }
 }
