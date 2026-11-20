@@ -10,8 +10,9 @@ GymPro es una aplicación de escritorio en Java para administrar un gimnasio: mi
 | Versión | Sprint | Qué se puede hacer |
 |---|---|---|
 | `v0.1` | Sprint 1 | Menú de consola: registrar miembros (regular, estudiante, corporativo), buscarlos por DNI, listarlos, y crear y listar planes (mensual, trimestral, anual) con su importe. |
+| `v0.2` | Sprint 2 | Inicio de sesión gráfico con 3 roles y ventana principal con las pestañas y menús de cada rol. En consola: contratar y renovar membresías con el desglose del pago, ver la ficha del miembro (estado, vencimiento, días restantes e historial) y listar las membresías vencidas y por vencer. |
 
-La interfaz gráfica (Swing), los archivos y la base de datos se agregan en los siguientes sprints (ver el [Plan Scrum](docs/Plan_Scrum_GymPro.md)).
+Por ahora la ventana principal solo muestra las pestañas de cada rol; su contenido (Swing), los archivos y la base de datos se agregan en los siguientes sprints (ver el [Plan Scrum](docs/Plan_Scrum_GymPro.md)).
 
 ## Requisitos
 
@@ -172,14 +173,15 @@ gimnasio-poo/
 
 | Integrante | Rol Scrum | Área técnica |
 |---|---|---|
-| *(nombre)* — I1 | Product Owner | Lógica de negocio |
-| *(nombre)* — I2 | Scrum Master | Interfaz gráfica e integración |
-| *(nombre)* — I3 | Desarrollador | Modelo, persistencia y pruebas (QA) |
+| Luis Alberto Vera Salcedo — I1 | Product Owner | Lógica de negocio |
+| David Rodrigo Jove Choquecota — I2 (líder) | Scrum Master | Interfaz gráfica e integración |
+| Eydan Fabricio Mayna Mollapaza — I3 | Desarrollador | Modelo, persistencia y pruebas (QA) |
 
 ## Documentación
 
 - [Especificación del sistema](docs/Especificacion_GymPro.md)
 - [Plan Scrum](docs/Plan_Scrum_GymPro.md)
+- Diagramas de clases UML (actualizados al Sprint 2; en verde las clases ya implementadas): [completo](Diagramas_UML/Diagrama_UML_Gimnasio.svg) y [simplificado](Diagramas_UML/Diagrama_UML_Gimnasio_Simplificado.svg). Las fuentes `.puml` están en la misma carpeta.
 
 ## Flujo de trabajo
 
