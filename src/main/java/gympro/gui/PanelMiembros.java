@@ -111,6 +111,7 @@ public final class PanelMiembros extends JPanel implements Actualizable
     private void configurarTabla()
     {
         tabla.setRowSorter(sorter);
+        tabla.setDefaultRenderer(Object.class, new EstadoCellRenderer());
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tabla.setFillsViewportHeight(true);
         tabla.setRowHeight(22);
