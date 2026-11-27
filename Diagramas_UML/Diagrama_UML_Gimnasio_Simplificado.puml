@@ -21,7 +21,7 @@ skinparam package {
   BorderColor #9AB0D0
 }
 hide empty members
-title GymPro - Modelo del negocio (diagrama simplificado, actualizado al Sprint 2)
+title GymPro - Modelo del negocio (diagrama simplificado, actualizado al Sprint 3)
 
 class Gimnasio {
   - miembros : HashMap<String, Miembro>
@@ -36,6 +36,10 @@ class Gimnasio {
   + getMembresiasVencidas() : ArrayList<Membresia>
   + getMembresiasProximasAVencer(dias) : ArrayList<Membresia>
   + iniciarSesion(user, pass) : Usuario
+  + actualizarMiembro(m : Miembro)
+  + darDeBajaMiembro(dni)
+  + registrarEntrenador(e : Entrenador)
+  + buscarEntrenadoresPorEspecialidad(e) : ArrayList<Entrenador>
   + asignarEntrenador(dni, codEntrenador)
   + crearRutina(dni, nombre, objetivo) : Rutina
 }
@@ -69,22 +73,26 @@ package "Personas" {
 
   abstract class Miembro {
     - codigo : String
-    - pesoKg : double
-    - alturaM : double
+    - activo : boolean
+    - entrenador : Entrenador
     + getEstadoInscripcion() : EstadoInscripcion
     + getMembresiaVigente() : Membresia
     + getFechaVencimiento() : LocalDate
     + getDiasRestantes() : long
     + getHistorialOrdenado() : ArrayList<Membresia>
-    + calcularIMC(pesoKg, alturaM) : double
+    + asignarRutina(r : Rutina)
+    + getRutinaActual() : Rutina
   }
 
   class Entrenador {
+    - codigo : String
+    - turno : Turno
     - especialidades : ArrayList<Especialidad>
     - disponibilidad : boolean[7][3]
     - {static} MAX_MIEMBROS : int = 15
     + asignarMiembro(m : Miembro)
     + calcularSueldo() : double
+    + compareTo(o : Entrenador) : int
   }
 
   class MiembroRegular <<0 %>>
@@ -131,9 +139,11 @@ package "Entrenamiento" {
     - objetivo : Objetivo
     - detalles : DetalleRutina[20]
     - numDetalles : int
+    - activa : boolean
     + agregarEjercicio(...) : Rutina
-    + eliminarEjercicio(i : int)
+    + eliminarDetalle(i : int)
     + ordenarPorDia()
+    + archivar()
   }
   class DetalleRutina {
     - dia : DiaSemana

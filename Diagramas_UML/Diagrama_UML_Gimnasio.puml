@@ -7,7 +7,7 @@
 '  instalado se usa el motor integrado con -Playout=smetana):
 '    java -jar plantuml.jar -Playout=smetana -tsvg Diagramas_UML/Diagrama_UML_Gimnasio.puml
 '
-'  Actualizado al Sprint 2 (v0.2). Las clases en verde ya están
+'  Actualizado al Sprint 3 (v0.3). Las clases en verde ya están
 '  implementadas; las blancas son el diseño de los próximos sprints.
 ' ============================================================
 skinparam classAttributeIconSize 0
@@ -148,15 +148,20 @@ package "modelo.persona" {
     + compareTo(o : Miembro) : int
     + {abstract} getTipo() : String
     + {abstract} getPorcentajeDescuento() : double
-    .. pendiente (Sprint 3) ..
-    - fechaRegistro : LocalDate
-    - pesoKg : double
-    - alturaM : double
     - activo : boolean
     - entrenador : Entrenador
     - historialRutinas : ArrayList<Rutina>
+    + isActivo() : boolean
+    + setActivo(activo : boolean) : void
+    + getEntrenador() : Entrenador
+    + setEntrenador(e : Entrenador) : void
     + asignarRutina(r : Rutina) : void
     + getRutinaActual() : Rutina
+    + getHistorialRutinas() : ArrayList<Rutina>
+    .. pendiente (Sprint 4) ..
+    - fechaRegistro : LocalDate
+    - pesoKg : double
+    - alturaM : double
   }
 
   class MiembroRegular #E8F5E9 {
@@ -178,7 +183,9 @@ package "modelo.persona" {
 
   class Entrenador #E8F5E9 {
     - codigo : String
+    - {static} contador : int
     - {static} MAX_MIEMBROS : int = 15
+    - {static} BONO_POR_MIEMBRO : double = 20
     - sueldoBase : double
     - turno : Turno
     - especialidades : ArrayList<Especialidad>
@@ -188,7 +195,7 @@ package "modelo.persona" {
     + agregarEspecialidad(e : Especialidad) : Entrenador
     + tieneEspecialidad(e : Especialidad) : boolean
     + puedeAceptarMiembro() : boolean
-    + asignarMiembro(m : Miembro) : void
+    + asignarMiembro(m : Miembro) : void <<throws EntrenadorSinCupoException>>
     + retirarMiembro(m : Miembro) : boolean
     + setDisponible(d : DiaSemana, t : Turno, v : boolean) : void
     + estaDisponible(d : DiaSemana, t : Turno) : boolean
@@ -296,13 +303,14 @@ package "modelo.membresia" {
 ' ======================= ENTRENAMIENTO =======================
 package "modelo.entrenamiento" {
   class Ejercicio <<Serializable>> #E8F5E9 {
-    - codigo : String
     - nombre : String
     - grupoMuscular : GrupoMuscular
-    - equipo : String
-    - descripcion : String
     + toString() : String
     + equals(o : Object) : boolean
+    .. pendiente (opcional) ..
+    - codigo : String
+    - equipo : String
+    - descripcion : String
   }
 
   class DetalleRutina <<Serializable>> #E8F5E9 {
@@ -312,8 +320,10 @@ package "modelo.entrenamiento" {
     - repeticiones : int
     - pesoKg : double
     - descansoSeg : int
+    - {static} MIN_SERIES = 1, MAX_SERIES = 10
+    - {static} MIN_REPETICIONES = 1, MAX_REPETICIONES = 50
     --
-    + DetalleRutina(ej, dia, series, reps)
+    + DetalleRutina(ej, dia, series, reps) <<throws DatosInvalidosException (RN-09)>>
     + DetalleRutina(ej, dia, series, reps, peso, descanso)
     + calcularVolumen() : double
     + toString() : String
@@ -331,15 +341,21 @@ package "modelo.entrenamiento" {
     - detalles : DetalleRutina[]
     - numDetalles : int
     --
+    + Rutina(codigo, nombre, objetivo, miembro, entrenador)
+    + agregarDetalle(d : DetalleRutina) : void
     + agregarEjercicio(e : Ejercicio, d : DiaSemana, series : int, reps : int) : Rutina
-    + eliminarEjercicio(indice : int) : boolean
+    + agregarEjercicio(e, d, series, reps, peso, descanso) : Rutina
+    + eliminarDetalle(indice : int) : boolean
     + buscarEjercicio(nombre : String) : int
     + ordenarPorDia() : void
-    + getEjerciciosDelDia(d : DiaSemana) : DetalleRutina[]
+    + getDetallesPorDia(d : DiaSemana) : DetalleRutina[]
     + getDetalles() : DetalleRutina[]
+    + getNumDetalles() : int
+    + getTotalSeries() : int
     + estaLlena() : boolean
-    + calcularVolumenTotal() : double
     + archivar() : void
+    + isActiva() : boolean
+    .. pendiente (Sprint 5, HU-15) ..
     + generarTextoImprimible() : String
   }
 }
@@ -355,8 +371,11 @@ package "servicio" #F3EEFA {
     - membresias : ArrayList<Membresia>
     - pagos : ArrayList<Pago>
     - usuarios : ArrayList<Usuario>
+    - entrenadores : HashMap<String, Entrenador>
+    - catalogoEjercicios : ArrayList<Ejercicio>
     - contadorMembresias : int
     - contadorPagos : int
+    - contadorRutinas : int
     --
     + registrarMiembro(m : Miembro) : void
     + buscarMiembro(dni : String) : Miembro
@@ -377,15 +396,17 @@ package "servicio" #F3EEFA {
     + getUsuarios() : ArrayList<Usuario>
     + getMembresias() : ArrayList<Membresia>
     + getPagos() : ArrayList<Pago>
-    .. pendiente (Sprint 3) ..
-    - entrenadores : HashMap<String, Entrenador>
-    - catalogoEjercicios : ArrayList<Ejercicio>
     + actualizarMiembro(m : Miembro) : void
     + darDeBajaMiembro(dni : String) : void
     + registrarEntrenador(e : Entrenador) : void
+    + buscarEntrenador(codigo : String) : Entrenador
+    + listarEntrenadores() : ArrayList<Entrenador>
     + buscarEntrenadoresPorEspecialidad(e : Especialidad) : ArrayList<Entrenador>
     + asignarEntrenador(dni : String, codEntrenador : String) : void
+    + rankingEntrenadores() : ArrayList<Entrenador>
     + agregarEjercicioCatalogo(e : Ejercicio) : void
+    + getCatalogoEjercicios() : ArrayList<Ejercicio>
+    + getCatalogoEjercicios(g : GrupoMuscular) : ArrayList<Ejercicio>
     + crearRutina(dni : String, nombre : String, obj : Objetivo) : Rutina
   }
 
@@ -512,31 +533,89 @@ package "gui" #F7F7F7 {
   }
   class VentanaPrincipal <<final>> #E8F5E9 {
     - {static} PESTANAS : String[][]
+    - gimnasio : Gimnasio
     - usuario : Usuario
+    - alCerrarSesion : Runnable
     - pestanas : JTabbedPane
+    - lblMensaje : JLabel
     - lblReloj : JLabel
+    - reloj : Timer
+    - limpiarMensaje : Timer
     + VentanaPrincipal(g : Gimnasio, u : Usuario)
+    + VentanaPrincipal(g : Gimnasio, u : Usuario, alCerrarSesion : Runnable)
     + getTitulosPestanas() : String[]
+    + mostrarMensaje(texto : String) : void
+    + dispose() : void
     - crearMenu() : JMenuBar
     - crearPestanas() : void
+    - crearPanel(titulo : String, modulo : String) : JComponent
     - crearBarraEstado() : JPanel
-    - actualizarReloj() : void
+    - confirmarSalida() : void
   }
   interface ActionListener <<java.awt.event>>
+  interface Actualizable <<interface>> #E8F5E9 {
+    + actualizar() : void
+  }
   class PanelDashboard
-  class PanelMiembros
-  class PanelPlanesPagos
-  class PanelEntrenadores
-  class PanelRutinas
+  class PanelMiembros <<final>> #E8F5E9 {
+    - modelo : MiembroTableModel
+    - tabla : JTable
+    - sorter : TableRowSorter
+    - txtBuscar : JTextField
+    - cboEstado : JComboBox
+    + actualizar() : void
+    - filtrar() : void
+    - seleccionado() : Miembro
+    - nuevo() / editar() / darDeBaja() / verFicha() : void
+  }
+  class PanelPlanesPagos <<final>> #E8F5E9 {
+    - cboPlan : JComboBox<Plan>
+    - radiosMetodo : JRadioButton[]
+    - txtComprobante : JTextArea
+    + actualizar() : void
+    - crearPlan() : void
+    - actualizarDesglose() : void
+    - registrarPago() : void
+  }
+  class PanelEntrenadores <<final>> #E8F5E9 {
+    - chkEspecialidades : JCheckBox[]
+    - celdas : JCheckBox[7][3]
+    - cboTurno : JComboBox<Turno>
+    - lstAsignados : JList<Miembro>
+    + actualizar() : void
+    - registrar() : void
+    - mostrar(e : Entrenador) : void
+    - asignarMiembro() : void
+  }
+  class PanelRutinas <<final>> #E8F5E9 {
+    - cboMiembro : JComboBox<Miembro>
+    - lstCatalogo : JList<Ejercicio>
+    - spSeries, spReps, spPeso, spDescanso : JSpinner
+    - tablaRutina : JTable
+    - barra : JProgressBar
+    + actualizar() : void
+    - nuevaRutina() : void
+    - agregarEjercicio() / quitarEjercicio() / ordenarPorDia() : void
+  }
   class PanelReportes
-  class DialogoMiembro
-  class MiembroTableModel {
+  class DialogoMiembro <<final>> #E8F5E9 {
+    - miembro : Miembro
+    - tarjetas : CardLayout
+    - cboTipo : JComboBox<String>
+    + DialogoMiembro(padre : Window, g : Gimnasio, m : Miembro)
+    + getMiembroGuardado() : Miembro
+    - guardar() : void
+  }
+  class MiembroTableModel #E8F5E9 {
+    + setMiembros(lista : List<Miembro>) : void
+    + getMiembro(filaModelo : int) : Miembro
     + getRowCount() : int
     + getColumnCount() : int
     + getValueAt(f : int, c : int) : Object
   }
-  class EstadoCellRenderer {
+  class EstadoCellRenderer #E8F5E9 {
     + getTableCellRendererComponent(...) : Component
+    + {static} colorDe(e : EstadoInscripcion) : Color
   }
   class GraficoBarras {
     - valores : double[]
@@ -553,9 +632,8 @@ package "gui" #F7F7F7 {
 package "app" {
   class Main #E8F5E9 {
     + {static} main(args : String[]) : void
+    - {static} abrirLogin(g : Gimnasio) : void
     - {static} registrarUsuariosDePrueba(g : Gimnasio) : void
-    - {static} iniciarSesion(g : Gimnasio, u : Usuario) : void
-    - {static} abrirMenuConsola(g : Gimnasio, u : Usuario) : void
   }
   class MenuConsola #E8F5E9 {
     - gimnasio : Gimnasio
@@ -656,13 +734,17 @@ VentanaPrincipal *-- PanelReportes
 PanelMiembros *-- MiembroTableModel
 PanelMiembros ..> DialogoMiembro
 PanelMiembros ..> EstadoCellRenderer
+Actualizable <|.. PanelMiembros
+Actualizable <|.. PanelPlanesPagos
+Actualizable <|.. PanelEntrenadores
+Actualizable <|.. PanelRutinas
+DialogoMiembro ..> Gimnasio : registrar / actualizar
 PanelDashboard *-- GraficoBarras
 VentanaPrincipal --> Persistencia
 PanelReportes --> ServicioReportes
 
 Main ..> VentanaLogin : abre
 Main ..> VentanaPrincipal : abre al ingresar
-Main ..> MenuConsola
 MenuConsola --> Gimnasio
 
 ' ---- Distribución compacta (enlaces ocultos) ----
@@ -694,9 +776,9 @@ note as N1
 end note
 
 legend top right
-  <b>Estado al Sprint 2 (v0.2)</b>
+  <b>Estado al Sprint 3 (v0.3)</b>
   <back:#E8F5E9>   verde   </back> implementado
-  <back:#FEFEFE>   blanco   </back> planificado (Sprint 3 a 5)
+  <back:#FEFEFE>   blanco   </back> planificado (Sprint 4 y 5)
   ".. pendiente .." = miembros que todavía no están en el código
 endlegend
 

@@ -11,8 +11,9 @@ GymPro es una aplicación de escritorio en Java para administrar un gimnasio: mi
 |---|---|---|
 | `v0.1` | Sprint 1 | Menú de consola: registrar miembros (regular, estudiante, corporativo), buscarlos por DNI, listarlos, y crear y listar planes (mensual, trimestral, anual) con su importe. |
 | `v0.2` | Sprint 2 | Inicio de sesión gráfico con 3 roles y ventana principal con las pestañas y menús de cada rol. En consola: contratar y renovar membresías con el desglose del pago, ver la ficha del miembro (estado, vencimiento, días restantes e historial) y listar las membresías vencidas y por vencer. |
+| `v0.3` | Sprint 3 | Todo desde la interfaz gráfica: miembros (registrar, editar, dar de baja, búsqueda en vivo y colores por estado), planes y pagos (desglose en vivo y comprobante), entrenadores (especialidades, turno, disponibilidad y asignación de miembros con cupo de 15) y rutinas (hasta 20 ejercicios, ordenar por día e historial). |
 
-Por ahora la ventana principal solo muestra las pestañas de cada rol; su contenido (Swing), los archivos y la base de datos se agregan en los siguientes sprints (ver el [Plan Scrum](docs/Plan_Scrum_GymPro.md)).
+Dashboard, reportes, archivos y base de datos se agregan en los siguientes sprints (ver el [Plan Scrum](docs/Plan_Scrum_GymPro.md)).
 
 ## Requisitos
 
@@ -80,41 +81,33 @@ Si el usuario o la contraseña son incorrectos aparece un mensaje de error. Al i
 | Rol | Pestañas | Menús |
 |---|---|---|
 | Administrador | Dashboard, Miembros, Planes y Pagos, Entrenadores, Rutinas, Reportes | Archivo (completo), Base de datos, Ayuda |
-| Recepcionista | Dashboard, Miembros, Planes y Pagos | Archivo (solo Salir), Ayuda |
-| Entrenador | Miembros, Rutinas (no ve Reportes) | Archivo (solo Salir), Ayuda |
+| Recepcionista | Dashboard, Miembros, Planes y Pagos | Archivo (Cerrar sesión y Salir), Ayuda |
+| Entrenador | Miembros, Rutinas (no ve Reportes) | Archivo (Cerrar sesión y Salir), Ayuda |
 
-Las pestañas todavía están vacías (su contenido llega en el Sprint 3). Mientras tanto, el menú de consola sigue funcionando en paralelo.
+## Uso de la interfaz gráfica
 
-## Uso del menú
+Todo se usa desde las pestañas de la ventana principal (el menú de consola ya no se abre; la clase `MenuConsola` se conserva). Los datos se guardan solo en memoria mientras el programa está abierto (la persistencia llega en el Sprint 4).
 
-```
-========== GymPro ==========
-1. Registrar miembro
-2. Buscar miembro por DNI
-3. Listar miembros
-4. Crear plan
-5. Listar planes
-6. Contratar / renovar membresía
-7. Ver membresías vencidas y por vencer
-0. Salir
-```
+| Pestaña | Qué se puede hacer |
+|---|---|
+| **Miembros** | Tabla con DNI, nombre, tipo, plan, vencimiento, días, estado y entrenador. Búsqueda en vivo por DNI o nombre, filtro por estado (incluye «Dados de baja») y orden por columna. Botones **Nuevo** y **Editar** (formulario modal; al editar no se cambian el DNI ni el tipo), **Dar de baja** (baja lógica, con confirmación) y **Ver ficha** (también con doble clic). Filas en verde (activo), amarillo (por vencer), rojo (vencido), blanco (sin membresía) y gris (dado de baja). |
+| **Planes y Pagos** | Tabla de planes y formulario para crear planes. Contratar o renovar: buscar el DNI, elegir el plan y el método de pago; el desglose (importe, descuento, matrícula, recargo y total) se recalcula al instante. **Registrar pago** muestra el comprobante; si el miembro ya tiene una membresía vigente, ofrece renovarla. Historial de pagos. |
+| **Entrenadores** | Registrar entrenadores con especialidades (casillas), turno y disponibilidad semanal en una grilla de 7 días × 3 turnos. Tabla de entrenadores con filtro por especialidad; al seleccionar uno se ven sus datos. **Asignar miembro** (solo miembros con membresía activa, máximo 15 por entrenador) y lista de sus miembros asignados. |
+| **Rutinas** | Elegir un miembro con membresía activa y crear una rutina con nombre y objetivo (la anterior pasa al historial). Agregar ejercicios del catálogo (filtrable por grupo muscular) con día, series (1–10), repeticiones (1–50), peso y descanso; quitar y ordenar por día. La barra muestra cuántos ejercicios lleva la rutina (máximo 20). |
+| Dashboard y Reportes | Llegan en el Sprint 4. |
 
-Ejemplo de recorrido (demo del Sprint 1):
+Menú **Archivo → Cerrar sesión** vuelve a la ventana de inicio de sesión; **Salir** (o `Ctrl+Q`) cierra el programa después de confirmar.
 
-1. **Opción 4** tres veces para crear los planes: tipo `1` código `PM`, tipo `2` código `PT` y tipo `3` código `PA`, todos con precio `120`.
-2. **Opción 5**: muestra los importes S/ 120.00, S/ 324.00 y S/ 1152.00.
-3. **Opción 1** para registrar un miembro de cada tipo. DNI de 8 dígitos, teléfono de 9 dígitos y email con `@`; la fecha de nacimiento (`dd/mm/aaaa`) es opcional.
-4. **Opción 1** con DNI `1234`: se muestra el mensaje de error y el menú continúa.
-5. **Opción 2** con un DNI registrado: muestra la ficha del miembro (código, datos, tipo, descuento, estado de inscripción, fecha de vencimiento, días restantes e historial de membresías).
-6. **Opción 3**: lista los miembros ordenados por apellido.
+Ejemplo de recorrido (demo del Sprint 3):
 
-Contratar y renovar (Sprint 2):
-
-7. **Opción 6** con un miembro estudiante, plan `PT` y método `4` (tarjeta), y confirmar con `S`. El comprobante muestra el desglose: importe S/ 324.00, descuento S/ 48.60, matrícula S/ 50.00, recargo S/ 9.76 y total **S/ 335.16**.
-8. **Opción 6** otra vez con el mismo miembro: avisa que ya tiene una membresía vigente y ofrece renovarla. Con `S`, la nueva membresía empieza el día siguiente al fin de la vigente, queda `PENDIENTE` y no cobra matrícula.
-9. **Opción 7**: pide cuántos días considerar "por vencer" (Enter = 7) y muestra dos listas ordenadas por fecha de fin: las membresías **vencidas** (con los días que lleva vencida) y las que **vencen en los próximos N días** (con los días restantes). Al iniciar el menú, los estados de las membresías se actualizan automáticamente.
-
-Los datos se guardan solo en memoria mientras el programa está abierto (la persistencia llega en el Sprint 4).
+1. Ingresar como `admin` / `admin123`.
+2. **Planes y Pagos**: crear los planes `PM` (mensual) y `PT` (trimestral) con precio `120`.
+3. **Miembros → Nuevo**: registrar una estudiante (DNI de 8 dígitos, teléfono de 9 dígitos, email con `@`, universidad y código).
+4. **Planes y Pagos**: buscar su DNI, elegir `PT` y **Tarjeta**: el total es **S/ 335.16** (importe S/ 324.00, descuento S/ 48.60, matrícula S/ 50.00, recargo S/ 9.76). Al cambiar a efectivo el total baja a S/ 325.40. **Registrar pago**.
+5. **Miembros**: la fila aparece en verde (ACTIVO).
+6. **Entrenadores**: registrar un entrenador con especialidades, turno y disponibilidad; seleccionarlo y **Asignar miembro**.
+7. **Rutinas**: elegir al miembro, crear una rutina, agregar ejercicios, **Ordenar por día** y **Quitar** uno.
+8. **Archivo → Cerrar sesión** e ingresar como `entrenador`: solo ve Miembros y Rutinas.
 
 ## Pruebas
 
@@ -138,7 +131,7 @@ java -cp "out:out-test" gympro.PruebasLogicaNegocio
 
 En Git Bash sobre Windows el separador del classpath también es `;` (`"out;out-test"`).
 
-Resultado esperado: `Resultado: 50 correctas, 0 con fallo.`
+Resultado esperado: `Resultado: 135 correctas, 0 con fallo.` Cubren, entre otros, CP-01 a CP-13 y CP-18: importes, contratar y renovar, vencimientos, actualizar y dar de baja, entrenadores, cupo de 15 (CP-10), rutina llena (CP-11), eliminar sin huecos (CP-12) e historial de rutinas (CP-13).
 
 ## Base de datos
 
@@ -165,7 +158,7 @@ gimnasio-poo/
       │    ├── util/                   Ordenamiento, Busqueda, Validador
       │    ├── excepciones/            GimnasioException y subclases
       │    ├── persistencia/           Archivos, DAO y JDBC (Sprint 4)
-      │    └── gui/                    Ventanas y paneles Swing (Sprint 3)
+      │    └── gui/                    Login, ventana principal, paneles, diálogo y modelos de tabla
       └── test/java/gympro/            Pruebas
 ```
 
@@ -181,7 +174,7 @@ gimnasio-poo/
 
 - [Especificación del sistema](docs/Especificacion_GymPro.md)
 - [Plan Scrum](docs/Plan_Scrum_GymPro.md)
-- Diagramas de clases UML (actualizados al Sprint 2; en verde las clases ya implementadas): [completo](Diagramas_UML/Diagrama_UML_Gimnasio.svg) y [simplificado](Diagramas_UML/Diagrama_UML_Gimnasio_Simplificado.svg). Las fuentes `.puml` están en la misma carpeta.
+- Diagramas de clases UML (actualizados al Sprint 3; en verde las clases ya implementadas): [completo](Diagramas_UML/Diagrama_UML_Gimnasio.svg) y [simplificado](Diagramas_UML/Diagrama_UML_Gimnasio_Simplificado.svg). Las fuentes `.puml` están en la misma carpeta.
 
 ## Flujo de trabajo
 
