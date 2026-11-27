@@ -2,7 +2,7 @@
 
 **Universidad Nacional de San Agustín de Arequipa**
 Curso: *Desarrollo de Software Orientado a Objetos* (2501211) — 2026-B
-Proyecto final "GymPro" — Equipo de 3 integrantes
+Proyecto final "GymPro" — Equipo de 2 integrantes (desde el 27/11/2026; en los sprints 1 a 3 fueron 3)
 
 > Documento relacionado: [Especificación del sistema](Especificacion_GymPro.md)
 
@@ -92,22 +92,16 @@ gantt
 
 ## 3. Equipo y roles
 
-En Scrum, el Product Owner (PO) y el Scrum Master (SM) son personas distintas y el resto es el equipo de desarrollo. En un equipo de 3 personas, los tres programan y además dos asumen un rol de Scrum. Reemplazar "Integrante 1/2/3" por los nombres reales.
+En Scrum, el Product Owner (PO) y el Scrum Master (SM) son personas distintas y el resto es el equipo de desarrollo. Desde el Sprint 4 el equipo tiene **2 integrantes**: los dos programan, uno es PO y el otro SM.
 
-### Integrante 1 (I1) — Product Owner + desarrollador de lógica de negocio
+| Integrante | Rol Scrum | Área técnica |
+|---|---|---|
+| David Rodrigo Jove Choquecota — I2 (líder) | Scrum Master | Interfaz gráfica, lógica de negocio e integración |
+| Eydan Fabricio Mayna Mollapaza — I3 | Product Owner | Modelo, persistencia (archivos y JDBC) y datos de prueba |
 
-**Rol Scrum**
-- Representa al "dueño del gimnasio" (el cliente).
-- Mantiene y ordena el Product Backlog por prioridad.
-- Escribe y aclara los criterios de aceptación.
-- Acepta o rechaza las historias en la Sprint Review.
+> **Cambio de equipo (27/11/2026):** Luis Alberto Vera Salcedo (I1, Product Owner y lógica de negocio) dejó el proyecto al cierre del Sprint 3. Su rol de PO pasa a I3 y su área técnica se reparte: la lógica de negocio y los reportes (`Gimnasio`, `ServicioReportes`, comprobantes) pasan a I2, y la transacción en la base de datos, los datos de prueba y la especificación final pasan a I3 (detalle en el [Sprint 4](#sprint-4--sáb-2811-al-dom-0612-2026--38-puntos--v10)). Los identificadores I2 e I3 se mantienen para que coincidan con las actas, issues y Pull Requests anteriores.
 
-**Área técnica principal**
-- Planes, membresías y pagos (`Plan` y subclases, `Membresia`, `Pago`).
-- Clase `Gimnasio` (servicio) y `ServicioReportes`.
-- Reglas de negocio: importes, descuentos, vencimientos.
-
-### Integrante 2 (I2) — Scrum Master + desarrollador de interfaz gráfica
+### Integrante 2 (I2) — Scrum Master + desarrollador de interfaz gráfica y lógica de negocio
 
 **Rol Scrum**
 - Organiza y modera todos los eventos (planning, daily, review, retro).
@@ -116,23 +110,29 @@ En Scrum, el Product Owner (PO) y el Scrum Master (SM) son personas distintas y 
 - Protege al equipo de cambios de alcance a mitad del sprint.
 
 **Área técnica principal**
-- Interfaz Swing: `VentanaLogin`, `VentanaPrincipal` y paneles.
-- Modelos de tabla, renderers, gráficos (`GraficoBarras`).
+- Interfaz Swing: `VentanaLogin`, `VentanaPrincipal`, paneles, modelos de tabla, renderers y gráficos (`GraficoBarras`).
+- Lógica de negocio (antes de I1): planes, membresías y pagos, `Gimnasio` y `ServicioReportes`.
 - Integración final de todas las partes.
 
-### Integrante 3 (I3) — Desarrollador de modelo, persistencia y calidad (QA)
+### Integrante 3 (I3) — Product Owner + desarrollador de modelo y persistencia
+
+**Rol Scrum** (antes de I1)
+- Representa al "dueño del gimnasio" (el cliente).
+- Mantiene y ordena el Product Backlog por prioridad.
+- Escribe y aclara los criterios de aceptación.
+- Acepta o rechaza las historias en la Sprint Review.
 
 **Área técnica principal**
 - Personas y entrenamiento (`Persona`, `Miembro` y subclases, `Entrenador`, `Rutina`, `DetalleRutina`, `Ejercicio`).
 - Utilidades (`Validador`, `Ordenamiento`, `Busqueda`) y excepciones.
-- Persistencia: archivos de texto, binarios, de objetos y JDBC/DAO.
-- Responsable de pruebas: mantiene la lista de casos de prueba y verifica cada historia antes de pasarla a "Hecho".
+- Persistencia: archivos de texto, binarios, de objetos y JDBC/DAO, incluida la transacción de contratar membresía (antes de I1).
+- Datos de prueba y especificación final (antes de I1).
 
 ### Reglas del equipo
 
-- Nadie trabaja solo en "su" parte: toda tarea se revisa por otro integrante (revisión cruzada en el Pull Request).
-- Cada integrante dedica como mínimo **9 horas por semana** al proyecto.
-- Los roles de PO y SM se pueden rotar a mitad del proyecto (desde el S3) si el equipo lo decide en la retrospectiva.
+- Nadie trabaja solo en "su" parte: toda tarea la revisa **el otro integrante** (revisión cruzada en el Pull Request). Esa revisión reemplaza el rol de QA que tenía I3.
+- Cada integrante dedica como mínimo **9 horas por semana** al proyecto; en el Sprint 4, al ser más largo y con 2 personas, unas **20 horas** cada uno.
+- Si uno no puede avanzar, lo avisa en la daily; el otro no espera al último día para tomar la tarea (mejora acordada en la retrospectiva del Sprint 3).
 
 ---
 
@@ -229,12 +229,12 @@ Cada integrante elige su estimación en secreto (cartas, papel o la app "Plannin
 
 ### 6.3 Capacidad del equipo por sprint
 
-| Integrante | Horas/semana | Horas efectivas (× 0.8) |
-|---|---|---|
-| I1 | 10 | 8 |
-| I2 | 10 | 8 |
-| I3 | 10 | 8 |
-| **Total** | **30** | **24 horas efectivas por sprint** |
+| Integrante | Sprints 1-3 (horas/semana) | Sprint 4 (9 días) | Horas efectivas S4 (× 0.8) |
+|---|---|---|---|
+| I1 | 10 | — (dejó el proyecto) | — |
+| I2 | 10 | 25 | 20 |
+| I3 | 10 | 25 | 20 |
+| **Total** | **30 (24 efectivas)** | **50** | **40 horas efectivas** |
 
 El factor 0.8 descuenta reuniones, dudas y tiempos muertos. En semanas de exámenes de otros cursos, reducir la capacidad (por ejemplo, al 60 %) y comprometer menos puntos.
 
@@ -422,15 +422,15 @@ Ordenado por prioridad (el orden lo decide el PO).
 - [ ] Cumple **todos** sus criterios de aceptación.
 - [ ] Atributos privados, nombres en camelCase y PascalCase, sin código repetido evidente, con Javadoc en las clases y métodos públicos.
 - [ ] Los errores del usuario se manejan con excepciones y mensajes claros (el programa no se cae).
-- [ ] Se probó con los casos de prueba de la historia y pasaron (verificado por I3 o por alguien distinto al autor).
-- [ ] El Pull Request fue revisado y aprobado por otro integrante y fusionado en `develop`.
+- [ ] Se probó con los casos de prueba de la historia y pasaron (verificado por el integrante que no es el autor).
+- [ ] El Pull Request fue revisado y aprobado por el otro integrante y fusionado en `develop`.
 - [ ] El diagrama UML se actualizó si se agregaron o cambiaron clases.
 - [ ] El PO la aceptó en la Sprint Review.
 
 ### 8.3 Definition of Done del incremento (fin de cada sprint)
 
 - [ ] `develop` se fusiona en `main` y se crea el tag `v0.N` (`v1.0` en el S5).
-- [ ] La aplicación arranca desde `Main` sin errores en las 3 computadoras.
+- [ ] La aplicación arranca desde `Main` sin errores en las computadoras de los 2 integrantes.
 
 ---
 
@@ -580,15 +580,15 @@ Herramienta: **GitHub Projects** (vinculado a issues y PRs) o Trello.
 
 | Product Backlog | Por hacer (sprint) | En progreso (máx. 2/persona) | En revisión (PR abierto) | Probado (QA ok) | Hecho |
 |---|---|---|---|---|---|
-| HU-09 … | HU-02 T1 | HU-02 T2 (I1) | HU-04 T1 | HT-03 | HT-01 |
+| HU-15 … | HU-13 T1 | HU-10 T1 (I2) | HU-14 T1 | HU-09 | HT-01 |
 
 **Reglas**
 
 1. Cada tarjeta tiene: ID de historia, responsable, estimación y la etiqueta del sprint.
 2. **Límite WIP:** máximo 2 tarjetas "En progreso" por persona. Antes de empezar algo nuevo se termina lo que se tiene.
 3. Una tarjeta pasa a "En revisión" sólo con un Pull Request abierto.
-4. Sólo I3 (o alguien que no sea el autor) mueve tarjetas a "Probado".
-5. Sólo el PO mueve historias completas a "Hecho" en la Sprint Review.
+4. Solo el integrante que no es el autor mueve la tarjeta a "Probado".
+5. Solo el PO (I3) mueve historias completas a "Hecho" en la Sprint Review.
 6. Si una tarea está bloqueada más de 1 día, se marca con la etiqueta `bloqueado` y se avisa en la daily.
 
 **Etiquetas:** `modelo`, `servicio`, `gui`, `persistencia`, `bd`, `docs`, `bug`, `bloqueado`.
@@ -686,11 +686,11 @@ Velocidad promedio = suma de "Aceptado" / número de sprints.
 
 ### 12.3 Registro de horas (opcional, útil para el informe)
 
-| Integrante | S1 | S2 | S3 | S4 | S5 | Total |
-|---|---|---|---|---|---|---|
-| I1 | | | | | | |
-| I2 | | | | | | |
-| I3 | | | | | | |
+| Integrante | S1 | S2 | S3 | S4 | Total |
+|---|---|---|---|---|---|
+| I1 (hasta el S3) | | | | — | |
+| I2 | | | | | |
+| I3 | | | | | |
 
 ---
 
@@ -701,7 +701,7 @@ Probabilidad e impacto: **A** = alto, **M** = medio, **B** = bajo.
 | # | Riesgo | Prob. | Imp. | Mitigación / plan de contingencia |
 |---|---|---|---|---|
 | R1 | Exámenes de otros cursos reducen las horas disponibles | A | A | Planificar menos puntos esas semanas; avisar en el planning. |
-| R2 | Un integrante se enferma o abandona | M | A | Revisión cruzada: los otros dos conocen su código. Redistribuir tareas en la daily. |
+| R2 | Un integrante se enferma o abandona | **Ocurrió** | A | I1 dejó el proyecto el 27/11. Sus tareas se repartieron entre I2 e I3 (sección 3). Con 2 personas, cada uno revisa el código del otro para que ambos lo conozcan. |
 | R3 | Temas aún no vistos en clase (GUI avanzada, JDBC) | M | M | Tarea de investigación (spike) de 1-2 h; usar el libro del curso (Aedo, Dean, Deitel). |
 | R4 | Conflictos de Git que rompen el código | M | M | Ramas por historia, PRs pequeños, pull frecuente; nunca trabajar directo en `main`. |
 | R5 | La BD no funciona en la computadora de la presentación | M | A | Usar SQLite (no necesita servidor) o el plan B de archivos `.dat`; probar en esa computadora el 09/12. |
@@ -745,7 +745,7 @@ Bloqueos : ninguno / ____
 ### 15.2 Acta de Sprint Planning
 
 ```
-SPRINT N - PLANNING - fecha ___     Asistentes: I1 I2 I3
+SPRINT N - PLANNING - fecha ___     Asistentes: I2 I3
 Objetivo del sprint : "______________________________"
 Capacidad           : ___ horas | ___ puntos
 Historias elegidas  : HU-__ (__ pts), HU-__ (__ pts) ...  Total: __
@@ -834,7 +834,7 @@ A diferencia del modelo en cascada, estas etapas se repiten **en cada sprint** s
 ### 17.2 Valores y principios ágiles que se aplican
 
 - **Software funcionando sobre documentación extensa:** la review es una demo.
-- **Colaboración con el cliente:** el PO representa al gimnasio y acepta o rechaza las historias.
+- **Colaboración con el cliente:** el PO (I3 desde el Sprint 4) representa al gimnasio y acepta o rechaza las historias.
 - **Responder al cambio:** el backlog se reordena cada semana.
 - **Individuos e interacciones:** dailies cortas y retrospectivas.
 - **Ritmo sostenible:** unas 10 horas por semana por persona, sin trasnochar el último día.
