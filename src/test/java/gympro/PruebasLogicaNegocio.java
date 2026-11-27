@@ -81,12 +81,42 @@ public class PruebasLogicaNegocio {
         pruebaMiembrosYPlanes();
         pruebaComprobante();
         pruebaUsuarios();
+        pruebaActualizarYDarDeBaja();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
         if (fallidas > 0) {
             System.exit(1);
         }
+    }
+
+    // HG-01 · T1: editar y dar de baja (decisiones D5 y D6)
+    private static void pruebaActualizarYDarDeBaja() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Miembro luis = g.buscarMiembro("70000001");
+        verificar("Un miembro nuevo está activo", luis.isActivo());
+
+        luis.setNombres("Luis Alberto");
+        luis.setTelefono("987654321");
+        g.actualizarMiembro(luis);
+        verificar("actualizarMiembro conserva los cambios", g.buscarMiembro("70000001").getNombres().equals("Luis Alberto"));
+        esperarExcepcion("actualizarMiembro(null)", DatosInvalidosException.class, () -> g.actualizarMiembro(null));
+        esperarExcepcion("Actualizar un miembro no registrado", MiembroNoEncontradoException.class,
+                () -> g.actualizarMiembro(new MiembroRegular("79999999", "No", "Existe", null, null, null)));
+        esperarExcepcion("Actualizar otro objeto con el mismo DNI", DatosInvalidosException.class,
+                () -> g.actualizarMiembro(new MiembroRegular("70000001", "Otro", "Objeto", null, null, null)));
+
+        g.contratarMembresia("70000002", "PM", MetodoPago.EFECTIVO);
+        g.darDeBajaMiembro("70000002");
+        Miembro ana = g.buscarMiembro("70000002");
+        verificar("Dar de baja deja activo = false", !ana.isActivo());
+        verificar("El dado de baja sigue registrado (baja lógica)", g.listarMiembros().contains(ana));
+        verificar("El dado de baja no aparece en listarMiembrosActivos", !g.listarMiembrosActivos().contains(ana));
+        esperarExcepcion("Dar de baja un DNI inexistente", MiembroNoEncontradoException.class, () -> g.darDeBajaMiembro("79999999"));
+        esperarExcepcion("Contratar a un dado de baja", DatosInvalidosException.class,
+                () -> g.contratarMembresia("70000002", "PT", MetodoPago.EFECTIVO, LocalDate.now().plusMonths(3)));
+        esperarExcepcion("Renovar a un dado de baja", DatosInvalidosException.class,
+                () -> g.renovarMembresia("70000002", "PT", MetodoPago.EFECTIVO));
     }
 
     // HU-12 y CP-18
