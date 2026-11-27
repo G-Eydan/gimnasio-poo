@@ -8,13 +8,20 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.EstadoMembresia;
 import gympro.modelo.enums.MetodoPago;
+import gympro.modelo.enums.Objetivo;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
+import gympro.modelo.entrenamiento.Ejercicio;
+import gympro.modelo.entrenamiento.Rutina;
+import gympro.modelo.enums.Especialidad;
+import gympro.modelo.enums.GrupoMuscular;
+import gympro.modelo.persona.Entrenador;
 import gympro.modelo.persona.Miembro;
 import gympro.modelo.persona.Usuario;
 import gympro.util.Ordenamiento;
@@ -46,15 +53,21 @@ public class Gimnasio implements Serializable {
     private final ArrayList<Membresia> membresias = new ArrayList<>();
     private final ArrayList<Pago> pagos = new ArrayList<>();
     private final ArrayList<Usuario> usuarios = new ArrayList<>();
+    /** Clave: código del entrenador (E001, E002…). */
+    private final HashMap<String, Entrenador> entrenadores = new HashMap<>();
+    /** Ejercicios disponibles para armar rutinas (sin nombres repetidos). */
+    private final ArrayList<Ejercicio> catalogoEjercicios = new ArrayList<>();
 
     // Contadores de códigos (de instancia, para que se guarden con el respaldo .dat)
     private int contadorMembresias = 0;
     private int contadorPagos = 0;
+    private int contadorRutinas = 0;
 
     public Gimnasio(String nombre, String ruc, String direccion) {
         this.nombre = nombre;
         this.ruc = ruc;
         this.direccion = direccion;
+        cargarCatalogoInicial();
     }
 
     public Gimnasio(String nombre) {
@@ -112,14 +125,226 @@ public class Gimnasio implements Serializable {
         return listarMiembrosActivos(LocalDate.now());
     }
 
+    /** Miembros no dados de baja con una membresía vigente en {@code hoy}. */
     public ArrayList<Miembro> listarMiembrosActivos(LocalDate hoy) {
         ArrayList<Miembro> lista = new ArrayList<>();
         for (Miembro m : listarMiembros()) {
-            if (tieneMembresiaVigente(m, hoy)) {
+            if (m.isActivo() && tieneMembresiaVigente(m, hoy)) {
                 lista.add(m);
             }
         }
         return lista;
+    }
+
+    /**
+     * Confirma los cambios hechos a un miembro registrado (HG-01 · T1). El DNI no se
+     * edita (decisión D5): el miembro debe ser el mismo objeto que está registrado con
+     * ese DNI. Vuelve a validar los datos por si se modificaron sin pasar por los setters.
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el miembro es nulo, no es el registrado o tiene datos inválidos
+     */
+    public void actualizarMiembro(Miembro m) throws MiembroNoEncontradoException, DatosInvalidosException {
+        if (m == null) {
+            throw new DatosInvalidosException("El miembro no puede ser nulo.");
+        }
+        Miembro registrado = buscarMiembro(m.getDni());
+        if (registrado != m) {
+            throw new DatosInvalidosException("El DNI " + m.getDni() + " pertenece a otro miembro; el DNI no se puede cambiar.");
+        }
+        if (m.getNombres() == null || m.getNombres().isBlank()
+            || m.getApellidos() == null || m.getApellidos().isBlank()) {
+            throw new DatosInvalidosException("Los nombres y apellidos no pueden estar vacíos.");
+        }
+        if (m.getTelefono() != null) {
+            Validador.validarTelefono(m.getTelefono());
+        }
+        if (m.getEmail() != null) {
+            Validador.validarEmail(m.getEmail());
+        }
+    }
+
+    /**
+     * Baja lógica (decisión D6): el miembro queda inactivo pero no se borra, para
+     * conservar su historial de membresías y pagos. Un miembro dado de baja no puede
+     * contratar ni renovar.
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     */
+    public void darDeBajaMiembro(String dni) throws MiembroNoEncontradoException {
+        buscarMiembro(dni).setActivo(false);
+    }
+
+    // ==================================================================
+    // Entrenadores (HU-06)
+    // ==================================================================
+
+    /**
+     * Registra un entrenador nuevo.
+     *
+     * @throws DatosInvalidosException si es nulo o ya hay un entrenador con el mismo DNI
+     */
+    public void registrarEntrenador(Entrenador e) throws DatosInvalidosException {
+        if (e == null) {
+            throw new DatosInvalidosException("El entrenador no puede ser nulo.");
+        }
+        for (Entrenador otro : entrenadores.values()) {
+            if (otro.getDni().equals(e.getDni())) {
+                throw new DatosInvalidosException("Ya existe un entrenador con DNI " + e.getDni() + ".");
+            }
+        }
+        entrenadores.put(e.getCodigo(), e);
+    }
+
+    /** @return el entrenador con ese código, o {@code null} si no existe */
+    public Entrenador buscarEntrenador(String codigo) {
+        return (codigo == null) ? null : entrenadores.get(codigo);
+    }
+
+    /** Todos los entrenadores, ordenados por apellidos y luego nombres. */
+    public ArrayList<Entrenador> listarEntrenadores() {
+        ArrayList<Entrenador> lista = new ArrayList<>(entrenadores.values());
+        lista.sort((a, b) -> {
+            int r = a.getApellidos().compareToIgnoreCase(b.getApellidos());
+            return (r != 0) ? r : a.getNombres().compareToIgnoreCase(b.getNombres());
+        });
+        return lista;
+    }
+
+    /** Entrenadores que tienen la especialidad indicada (ordenados como {@link #listarEntrenadores()}). */
+    public ArrayList<Entrenador> buscarEntrenadoresPorEspecialidad(Especialidad especialidad) {
+        ArrayList<Entrenador> lista = new ArrayList<>();
+        for (Entrenador e : listarEntrenadores()) {
+            if (e.tieneEspecialidad(especialidad)) {
+                lista.add(e);
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Asigna (o reasigna) un entrenador a un miembro con membresía activa (HU-07).
+     *
+     * <p>Primero se agrega al entrenador nuevo: si no tiene cupo, la excepción sale
+     * <b>antes</b> de quitar al miembro del entrenador anterior, y todo queda como estaba.</p>
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el entrenador no existe o el miembro no tiene membresía activa
+     * @throws EntrenadorSinCupoException   si el entrenador ya tiene 15 miembros (CP-10)
+     */
+    public void asignarEntrenador(String dni, String codEntrenador)
+            throws MiembroNoEncontradoException, DatosInvalidosException, EntrenadorSinCupoException {
+        Miembro m = buscarMiembro(dni);
+        Entrenador nuevo = buscarEntrenador(codEntrenador);
+        if (nuevo == null) {
+            throw new DatosInvalidosException("No existe el entrenador " + codEntrenador + ".");
+        }
+        Membresia vigente = m.getMembresiaVigente();
+        if (!m.isActivo() || vigente == null || vigente.getEstado() != EstadoMembresia.ACTIVA) {
+            throw new DatosInvalidosException("El miembro " + m.getNombreCompleto() + " no tiene una membresía activa.");
+        }
+        Entrenador anterior = m.getEntrenador();
+        if (anterior == nuevo) {
+            return;
+        }
+        nuevo.asignarMiembro(m);
+        if (anterior != null) {
+            anterior.quitarMiembro(m);
+        }
+        m.setEntrenador(nuevo);
+    }
+
+    /** Entrenadores de más a menos miembros asignados (RF-27), con el orden natural de {@link Entrenador}. */
+    public ArrayList<Entrenador> rankingEntrenadores() {
+        ArrayList<Entrenador> lista = new ArrayList<>(entrenadores.values());
+        lista.sort(Collections.reverseOrder());
+        return lista;
+    }
+
+    // ==================================================================
+    // Catálogo de ejercicios (HU-08)
+    // ==================================================================
+
+    /**
+     * Agrega un ejercicio al catálogo.
+     *
+     * @throws DatosInvalidosException si es nulo, no tiene nombre o grupo muscular, o el nombre ya existe
+     */
+    public void agregarEjercicioCatalogo(Ejercicio e) throws DatosInvalidosException {
+        if (e == null || e.getNombre() == null || e.getNombre().isBlank()) {
+            throw new DatosInvalidosException("El ejercicio necesita un nombre.");
+        }
+        if (e.getGrupoMuscular() == null) {
+            throw new DatosInvalidosException("El ejercicio necesita un grupo muscular.");
+        }
+        if (catalogoEjercicios.contains(e)) {
+            throw new DatosInvalidosException("El ejercicio " + e.getNombre() + " ya está en el catálogo.");
+        }
+        catalogoEjercicios.add(e);
+    }
+
+    /** @return copia del catálogo, en el orden en que se agregaron los ejercicios */
+    public ArrayList<Ejercicio> getCatalogoEjercicios() {
+        return new ArrayList<>(catalogoEjercicios);
+    }
+
+    /** @return los ejercicios del catálogo de ese grupo muscular ({@code null} = todos) */
+    public ArrayList<Ejercicio> getCatalogoEjercicios(GrupoMuscular grupo) {
+        ArrayList<Ejercicio> lista = new ArrayList<>();
+        for (Ejercicio e : catalogoEjercicios) {
+            if (grupo == null || e.getGrupoMuscular() == grupo) {
+                lista.add(e);
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Crea una rutina para un miembro con membresía activa (RN-11). La rutina anterior
+     * del miembro, si tenía, se archiva y queda en su historial (RN-10). El entrenador de
+     * la rutina es el que tiene asignado el miembro (puede ser {@code null}).
+     *
+     * <p>Por la decisión D4, en el Sprint 3 la GUI permite crear rutinas a los roles
+     * ADMINISTRADOR y ENTRENADOR; vincular usuario y entrenador queda para el Sprint 4.</p>
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el miembro no tiene membresía activa, falta el nombre o el objetivo
+     */
+    public Rutina crearRutina(String dni, String nombre, Objetivo objetivo)
+            throws MiembroNoEncontradoException, DatosInvalidosException {
+        Miembro m = buscarMiembro(dni);
+        Membresia vigente = m.getMembresiaVigente();
+        if (!m.isActivo() || vigente == null || vigente.getEstado() != EstadoMembresia.ACTIVA) {
+            throw new DatosInvalidosException("Solo se crean rutinas a miembros con membresía activa (RN-11).");
+        }
+        Rutina r = new Rutina(String.format("R%04d", contadorRutinas + 1), nombre, objetivo, m, m.getEntrenador());
+        contadorRutinas++;
+        m.asignarRutina(r);
+        return r;
+    }
+
+    /** Los 15 ejercicios con los que empieza el catálogo (guía, 7.5.2). */
+    private void cargarCatalogoInicial() {
+        Object[][] iniciales = {
+                {"Press de banca", GrupoMuscular.PECHO},
+                {"Sentadilla", GrupoMuscular.PIERNAS},
+                {"Peso muerto", GrupoMuscular.ESPALDA},
+                {"Dominadas", GrupoMuscular.ESPALDA},
+                {"Remo con barra", GrupoMuscular.ESPALDA},
+                {"Press militar", GrupoMuscular.HOMBROS},
+                {"Curl de bíceps", GrupoMuscular.BRAZOS},
+                {"Extensión de tríceps", GrupoMuscular.BRAZOS},
+                {"Plancha", GrupoMuscular.ABDOMEN},
+                {"Abdominales", GrupoMuscular.ABDOMEN},
+                {"Zancadas", GrupoMuscular.PIERNAS},
+                {"Prensa de piernas", GrupoMuscular.PIERNAS},
+                {"Elevaciones laterales", GrupoMuscular.HOMBROS},
+                {"Cinta de correr", GrupoMuscular.CARDIO},
+                {"Bicicleta estática", GrupoMuscular.CARDIO},
+        };
+        for (Object[] fila : iniciales) {
+            catalogoEjercicios.add(new Ejercicio((String) fila[0], (GrupoMuscular) fila[1]));
+        }
     }
 
     // ==================================================================
@@ -179,6 +404,7 @@ public class Gimnasio implements Serializable {
     public Pago contratarMembresia(String dni, String codPlan, MetodoPago metodo, LocalDate hoy)
             throws MiembroNoEncontradoException, MembresiaActivaException, DatosInvalidosException {
         Miembro miembro = buscarMiembro(dni);
+        validarNoDadoDeBaja(miembro);
         Plan plan = obtenerPlanActivo(codPlan);
         validarMetodoYFecha(metodo, hoy);
 
@@ -208,6 +434,7 @@ public class Gimnasio implements Serializable {
     public Pago renovarMembresia(String dni, String codPlan, MetodoPago metodo, LocalDate hoy)
             throws MiembroNoEncontradoException, MembresiaActivaException, DatosInvalidosException {
         Miembro miembro = buscarMiembro(dni);
+        validarNoDadoDeBaja(miembro);
         Plan plan = obtenerPlanActivo(codPlan);
         validarMetodoYFecha(metodo, hoy);
 
@@ -363,6 +590,12 @@ public class Gimnasio implements Serializable {
             throw new DatosInvalidosException("El plan " + plan.getNombre() + " está desactivado.");
         }
         return plan;
+    }
+
+    private void validarNoDadoDeBaja(Miembro miembro) throws DatosInvalidosException {
+        if (!miembro.isActivo()) {
+            throw new DatosInvalidosException("El miembro " + miembro.getNombreCompleto() + " está dado de baja.");
+        }
     }
 
     private void validarMetodoYFecha(MetodoPago metodo, LocalDate hoy) throws DatosInvalidosException {

@@ -1,6 +1,8 @@
 package gympro.modelo.entrenamiento;
 
+import gympro.excepciones.DatosInvalidosException;
 import gympro.modelo.enums.DiaSemana;
+import gympro.util.Validador;
 
 import java.io.Serializable;
 
@@ -21,14 +23,37 @@ public class DetalleRutina implements Serializable
     private double peso;
     private int descansoSeg;
 
-    /** Constructor corto: sin peso (ejercicio con el propio cuerpo) y sin descanso indicado. */
-    public DetalleRutina(Ejercicio ejercicio, DiaSemana dia, int series, int repeticiones)
+    /** Series y repeticiones permitidas (RN-09). */
+    public static final int MIN_SERIES = 1;
+    public static final int MAX_SERIES = 10;
+    public static final int MIN_REPETICIONES = 1;
+    public static final int MAX_REPETICIONES = 50;
+
+    /**
+     * Constructor corto: sin peso (ejercicio con el propio cuerpo) y sin descanso indicado.
+     *
+     * @throws DatosInvalidosException si algún dato no cumple RN-09
+     */
+    public DetalleRutina(Ejercicio ejercicio, DiaSemana dia, int series, int repeticiones) throws DatosInvalidosException
     {
         this(ejercicio, dia, series, repeticiones, 0.0, 0);
     }
 
+    /**
+     * Constructor completo. Las reglas de RN-09 se validan aquí, en un solo lugar.
+     *
+     * @throws DatosInvalidosException si falta el ejercicio o el día, las series no están entre 1 y 10,
+     *                                 las repeticiones entre 1 y 50, o el peso o el descanso son negativos
+     */
     public DetalleRutina(Ejercicio ejercicio, DiaSemana dia, int series, int repeticiones, double peso, int descansoSeg)
+            throws DatosInvalidosException
     {
+        if(ejercicio == null) throw new DatosInvalidosException("Debe elegir un ejercicio.");
+        if(dia == null) throw new DatosInvalidosException("Debe elegir un día.");
+        Validador.validarRango(series, MIN_SERIES, MAX_SERIES, "Las series");
+        Validador.validarRango(repeticiones, MIN_REPETICIONES, MAX_REPETICIONES, "Las repeticiones");
+        if(peso < 0) throw new DatosInvalidosException("El peso no puede ser negativo.");
+        if(descansoSeg < 0) throw new DatosInvalidosException("El descanso no puede ser negativo.");
         this.ejercicio = ejercicio;
         this.dia = dia;
         this.series = series;

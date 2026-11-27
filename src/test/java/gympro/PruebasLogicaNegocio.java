@@ -1,9 +1,20 @@
 package gympro;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
+import gympro.excepciones.RutinaLlenaException;
+import gympro.modelo.entrenamiento.DetalleRutina;
+import gympro.modelo.entrenamiento.Ejercicio;
+import gympro.modelo.entrenamiento.Rutina;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
+import gympro.modelo.enums.DiaSemana;
+import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.EstadoMembresia;
+import gympro.modelo.enums.GrupoMuscular;
+import gympro.modelo.enums.Objetivo;
+import gympro.modelo.enums.Turno;
+import gympro.modelo.persona.Entrenador;
 import gympro.modelo.enums.MetodoPago;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
@@ -81,12 +92,198 @@ public class PruebasLogicaNegocio {
         pruebaMiembrosYPlanes();
         pruebaComprobante();
         pruebaUsuarios();
+        pruebaActualizarYDarDeBaja();
+        pruebaEntrenadores();
+        pruebaAsignarEntrenador();
+        pruebaRutinas();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
         if (fallidas > 0) {
             System.exit(1);
         }
+    }
+
+    // HG-01 · T1: editar y dar de baja (decisiones D5 y D6)
+    private static void pruebaActualizarYDarDeBaja() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Miembro luis = g.buscarMiembro("70000001");
+        verificar("Un miembro nuevo está activo", luis.isActivo());
+
+        luis.setNombres("Luis Alberto");
+        luis.setTelefono("987654321");
+        g.actualizarMiembro(luis);
+        verificar("actualizarMiembro conserva los cambios", g.buscarMiembro("70000001").getNombres().equals("Luis Alberto"));
+        esperarExcepcion("actualizarMiembro(null)", DatosInvalidosException.class, () -> g.actualizarMiembro(null));
+        esperarExcepcion("Actualizar un miembro no registrado", MiembroNoEncontradoException.class,
+                () -> g.actualizarMiembro(new MiembroRegular("79999999", "No", "Existe", null, null, null)));
+        esperarExcepcion("Actualizar otro objeto con el mismo DNI", DatosInvalidosException.class,
+                () -> g.actualizarMiembro(new MiembroRegular("70000001", "Otro", "Objeto", null, null, null)));
+
+        g.contratarMembresia("70000002", "PM", MetodoPago.EFECTIVO);
+        g.darDeBajaMiembro("70000002");
+        Miembro ana = g.buscarMiembro("70000002");
+        verificar("Dar de baja deja activo = false", !ana.isActivo());
+        verificar("El dado de baja sigue registrado (baja lógica)", g.listarMiembros().contains(ana));
+        verificar("El dado de baja no aparece en listarMiembrosActivos", !g.listarMiembrosActivos().contains(ana));
+        esperarExcepcion("Dar de baja un DNI inexistente", MiembroNoEncontradoException.class, () -> g.darDeBajaMiembro("79999999"));
+        esperarExcepcion("Contratar a un dado de baja", DatosInvalidosException.class,
+                () -> g.contratarMembresia("70000002", "PT", MetodoPago.EFECTIVO, LocalDate.now().plusMonths(3)));
+        esperarExcepcion("Renovar a un dado de baja", DatosInvalidosException.class,
+                () -> g.renovarMembresia("70000002", "PT", MetodoPago.EFECTIVO));
+    }
+
+    // HU-06 · T1: registrar y buscar entrenadores
+    private static void pruebaEntrenadores() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Entrenador carlos = new Entrenador("40000001", "Carlos", "Ramos", null, "911111111", "carlos@gympro.pe", 1500, Turno.MANANA)
+                .agregarEspecialidad(Especialidad.MUSCULACION).agregarEspecialidad(Especialidad.FUNCIONAL);
+        Entrenador maria = new Entrenador("40000002", "María", "Apaza", null, "922222222", "maria@gympro.pe", 1400, Turno.TARDE)
+                .agregarEspecialidad(Especialidad.YOGA);
+        g.registrarEntrenador(carlos);
+        g.registrarEntrenador(maria);
+
+        verificar("Código generado E###", carlos.getCodigo().matches("E\\d{3}"));
+        verificar("Códigos distintos", !carlos.getCodigo().equals(maria.getCodigo()));
+        verificar("buscarEntrenador por código", g.buscarEntrenador(maria.getCodigo()) == maria);
+        verificar("buscarEntrenador inexistente -> null", g.buscarEntrenador("E999") == null);
+        verificar("listarEntrenadores ordena por apellido (Apaza, Ramos)",
+                g.listarEntrenadores().get(0) == maria && g.listarEntrenadores().get(1) == carlos);
+        esperarExcepcion("Entrenador con DNI repetido", DatosInvalidosException.class,
+                () -> g.registrarEntrenador(new Entrenador("40000001", "Otro", "Igual", null, null, null, 1000)));
+        esperarExcepcion("registrarEntrenador(null)", DatosInvalidosException.class, () -> g.registrarEntrenador(null));
+        esperarExcepcion("Sueldo base negativo", DatosInvalidosException.class,
+                () -> new Entrenador("40000009", "A", "B", null, null, null, -1));
+
+        verificar("Por especialidad MUSCULACION -> solo Carlos",
+                g.buscarEntrenadoresPorEspecialidad(Especialidad.MUSCULACION).equals(java.util.List.of(carlos)));
+        verificar("Por especialidad CARDIO -> ninguno", g.buscarEntrenadoresPorEspecialidad(Especialidad.CARDIO).isEmpty());
+
+        carlos.setDisponible(DiaSemana.LUNES, Turno.MANANA, true);
+        carlos.setDisponible(DiaSemana.VIERNES, Turno.NOCHE, true);
+        boolean[][] d = carlos.getDisponibilidad();
+        verificar("Disponibilidad guardada en [día][turno]",
+                d[DiaSemana.LUNES.ordinal()][Turno.MANANA.ordinal()] && d[DiaSemana.VIERNES.ordinal()][Turno.NOCHE.ordinal()]
+                && !d[DiaSemana.MARTES.ordinal()][Turno.TARDE.ordinal()] && d.length == 7 && d[0].length == 3);
+        verificarMonto("Sueldo sin miembros", carlos.calcularSueldo(), 1500.00);
+    }
+
+    // HU-07 · T1: asignar entrenador (CP-10 y HU-07-a a HU-07-d)
+    private static void pruebaAsignarEntrenador() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Entrenador e1 = new Entrenador("41000001", "Pedro", "Salas", null, null, null, 1000);
+        Entrenador e2 = new Entrenador("41000002", "Lucía", "Vera", null, null, null, 1200);
+        g.registrarEntrenador(e1);
+        g.registrarEntrenador(e2);
+
+        // 16 miembros con membresía activa
+        for (int i = 1; i <= 16; i++) {
+            String dni = String.format("7100%04d", i);
+            g.registrarMiembro(new MiembroRegular(dni, "Miembro" + i, "Prueba", null, null, null));
+            g.contratarMembresia(dni, "PM", MetodoPago.EFECTIVO);
+        }
+        for (int i = 1; i <= 15; i++) {
+            g.asignarEntrenador(String.format("7100%04d", i), e1.getCodigo());
+        }
+        verificar("15 miembros asignados a E1", e1.getMiembrosAsignados().size() == 15 && !e1.tieneCupo());
+
+        g.asignarEntrenador("71000016", e2.getCodigo());
+        esperarExcepcion("CP-10 miembro n.° 16 a un entrenador lleno", EntrenadorSinCupoException.class,
+                () -> g.asignarEntrenador("71000016", e1.getCodigo()));
+        verificar("CP-10 el miembro conserva su entrenador anterior",
+                g.buscarMiembro("71000016").getEntrenador() == e2 && e2.getMiembrosAsignados().size() == 1
+                && e1.getMiembrosAsignados().size() == 15);
+
+        esperarExcepcion("HU-07-a miembro sin membresía activa", DatosInvalidosException.class,
+                () -> g.asignarEntrenador("70000001", e2.getCodigo()));
+
+        g.asignarEntrenador("71000001", e2.getCodigo());
+        Miembro m1 = g.buscarMiembro("71000001");
+        verificar("HU-07-b reasignar de E1 a E2", e1.getMiembrosAsignados().size() == 14
+                && e2.getMiembrosAsignados().size() == 2 && m1.getEntrenador() == e2 && !e1.getMiembrosAsignados().contains(m1));
+        g.asignarEntrenador("71000001", e2.getCodigo());
+        verificar("Asignar dos veces al mismo no duplica", e2.getMiembrosAsignados().size() == 2);
+
+        esperarExcepcion("HU-07-c código de entrenador inexistente", DatosInvalidosException.class,
+                () -> g.asignarEntrenador("71000002", "E999"));
+
+        Entrenador e3 = new Entrenador("41000003", "Rosa", "Mamani", null, null, null, 1500);
+        g.registrarEntrenador(e3);
+        for (int i = 2; i <= 4; i++) {
+            g.asignarEntrenador(String.format("7100%04d", i), e3.getCodigo());
+        }
+        verificarMonto("HU-07-d sueldo con 3 miembros", e3.calcularSueldo(), 1560.00);
+        verificar("Ranking: E1 (12 miembros) va primero",
+                g.rankingEntrenadores().get(0) == e1);
+    }
+
+    // HU-08 · T3: rutinas (CP-11, CP-12, CP-13 y HU-08-a a HU-08-d)
+    private static void pruebaRutinas() throws Exception {
+        Ejercicio press = new Ejercicio("Press de banca", GrupoMuscular.PECHO);
+        Ejercicio sentadilla = new Ejercicio("Sentadilla", GrupoMuscular.PIERNAS);
+
+        // CP-11: el ejercicio n.° 21 no entra
+        Rutina llena = new Rutina("R9001", "Llena", Objetivo.FUERZA, null, null);
+        for (int i = 0; i < Rutina.MAX_EJERCICIOS; i++) {
+            llena.agregarEjercicio(press, DiaSemana.LUNES, 3, 10);
+        }
+        esperarExcepcion("CP-11 agregar el ejercicio n.° 21", RutinaLlenaException.class,
+                () -> llena.agregarEjercicio(sentadilla, DiaSemana.MARTES, 3, 10));
+        verificar("CP-11 siguen 20 ejercicios", llena.getNumDetalles() == 20 && llena.estaLlena());
+
+        // CP-12: eliminar la posición 2 de 5
+        Rutina cinco = new Rutina("R9002", "Cinco", Objetivo.HIPERTROFIA, null, null);
+        String[] nombres = {"A", "B", "C", "D", "E"};
+        for (String n : nombres) {
+            cinco.agregarEjercicio(new Ejercicio(n, GrupoMuscular.BRAZOS), DiaSemana.LUNES, 3, 10);
+        }
+        verificar("CP-12 eliminar posición 2", cinco.eliminarDetalle(2));
+        DetalleRutina[] quedan = cinco.getDetalles();
+        verificar("CP-12 quedan 4 en orden (A, B, D, E)", quedan.length == 4 && cinco.getNumDetalles() == 4
+                && quedan[0].getEjercicio().getNombre().equals("A") && quedan[1].getEjercicio().getNombre().equals("B")
+                && quedan[2].getEjercicio().getNombre().equals("D") && quedan[3].getEjercicio().getNombre().equals("E"));
+        verificar("Eliminar fuera de rango -> false", !cinco.eliminarDetalle(4) && !cinco.eliminarDetalle(-1));
+
+        // HU-08-a: validaciones RN-09
+        Rutina r = new Rutina("R9003", "Validar", Objetivo.FUERZA, null, null);
+        esperarExcepcion("HU-08-a series 0", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 0, 10));
+        esperarExcepcion("HU-08-a series 11", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 11, 10));
+        esperarExcepcion("HU-08-a repeticiones 51", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 3, 51));
+        esperarExcepcion("HU-08-a peso -5", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 3, 10, -5, 60));
+        esperarExcepcion("Rutina sin nombre", DatosInvalidosException.class, () -> new Rutina("R9", " ", Objetivo.FUERZA, null, null));
+        verificar("Los rechazados no se agregan", r.getNumDetalles() == 0);
+
+        // HU-08-b y HU-08-d: encadenar y ordenar por día
+        r.agregarEjercicio(press, DiaSemana.VIERNES, 3, 10)
+         .agregarEjercicio(sentadilla, DiaSemana.LUNES, 4, 8, 60, 90)
+         .agregarEjercicio(new Ejercicio("Plancha", GrupoMuscular.ABDOMEN), DiaSemana.MIERCOLES, 3, 1);
+        verificar("HU-08-d encadenar 3 agregarEjercicio", r.getNumDetalles() == 3);
+        r.ordenarPorDia();
+        DetalleRutina[] ordenados = r.getDetalles();
+        verificar("HU-08-b ordenar -> lunes, miércoles, viernes", ordenados[0].getDia() == DiaSemana.LUNES
+                && ordenados[1].getDia() == DiaSemana.MIERCOLES && ordenados[2].getDia() == DiaSemana.VIERNES);
+        verificar("buscarEjercicio sin distinguir mayúsculas", r.buscarEjercicio("SENTADILLA") == 0 && r.buscarEjercicio("Remo") == -1);
+
+        // Catálogo y crearRutina (CP-13 y HU-08-c)
+        Gimnasio g = nuevoGimnasio();
+        verificar("Catálogo inicial con 15 ejercicios", g.getCatalogoEjercicios().size() == 15);
+        verificar("Catálogo filtrado por PIERNAS", !g.getCatalogoEjercicios(GrupoMuscular.PIERNAS).isEmpty()
+                && g.getCatalogoEjercicios(GrupoMuscular.PIERNAS).stream().allMatch(e -> e.getGrupoMuscular() == GrupoMuscular.PIERNAS));
+        esperarExcepcion("Ejercicio repetido en el catálogo", DatosInvalidosException.class,
+                () -> g.agregarEjercicioCatalogo(new Ejercicio("sentadilla", GrupoMuscular.PIERNAS)));
+        g.agregarEjercicioCatalogo(new Ejercicio("Burpees", GrupoMuscular.CUERPO_COMPLETO));
+        verificar("agregarEjercicioCatalogo", g.getCatalogoEjercicios().size() == 16);
+
+        esperarExcepcion("HU-08-c rutina a un miembro sin membresía activa", DatosInvalidosException.class,
+                () -> g.crearRutina("70000001", "Inicio", Objetivo.FUERZA));
+        g.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO);
+        Rutina primera = g.crearRutina("70000001", "Inicio", Objetivo.FUERZA);
+        Rutina segunda = g.crearRutina("70000001", "Fase 2", Objetivo.HIPERTROFIA);
+        Miembro luis = g.buscarMiembro("70000001");
+        verificar("CP-13 la primera queda archivada en el historial", !primera.isActiva()
+                && luis.getHistorialRutinas().size() == 2 && luis.getHistorialRutinas().get(0) == primera);
+        verificar("CP-13 getRutinaActual es la nueva", luis.getRutinaActual() == segunda && segunda.isActiva());
+        verificar("Códigos de rutina distintos", !primera.getCodigo().equals(segunda.getCodigo()));
     }
 
     // HU-12 y CP-18

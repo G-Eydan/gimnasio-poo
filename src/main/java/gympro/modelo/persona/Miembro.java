@@ -2,6 +2,7 @@ package gympro.modelo.persona;
 
 import gympro.excepciones.DatosInvalidosException;
 import gympro.modelo.enums.EstadoInscripcion;
+import gympro.modelo.entrenamiento.Rutina;
 import gympro.modelo.enums.EstadoMembresia;
 import gympro.modelo.membresia.Membresia;
 import java.time.LocalDate;
@@ -26,7 +27,13 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
 
     private final String codigo;
     private final ArrayList<Membresia> historialMembresias = new ArrayList<>();
-    // Sprint 2: peso, altura, entrenador e historial de rutinas
+    /** Baja lógica (decisión D6): un miembro dado de baja no se borra, solo queda inactivo. */
+    private boolean activo = true;
+    /** Entrenador asignado (asociación 0..1); lo cambia Gimnasio.asignarEntrenador (HU-07). */
+    private Entrenador entrenador;
+    /** Rutinas en orden de creación; solo la última puede estar activa (RN-10). */
+    private final ArrayList<Rutina> historialRutinas = new ArrayList<>();
+    // Pendiente: peso y altura como atributos
 
     /** Constructor corto: solo DNI, nombres y apellidos. */
     public Miembro(String dni, String nombres, String apellidos) throws DatosInvalidosException
@@ -184,6 +191,58 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     public String getCodigo()
     {
         return codigo;
+    }
+
+    /** @return false si el miembro fue dado de baja (baja lógica, HG-01) */
+    public boolean isActivo()
+    {
+        return activo;
+    }
+
+    public void setActivo(boolean activo)
+    {
+        this.activo = activo;
+    }
+
+    /** @return el entrenador asignado, o {@code null} si no tiene */
+    public Entrenador getEntrenador()
+    {
+        return entrenador;
+    }
+
+    /** Lo usa {@code Gimnasio.asignarEntrenador}, que mantiene la lista del entrenador sincronizada. */
+    public void setEntrenador(Entrenador entrenador)
+    {
+        this.entrenador = entrenador;
+    }
+
+    /**
+     * Asigna una rutina nueva: la actual (si hay) se archiva y queda en el historial (RN-10).
+     *
+     * @throws IllegalArgumentException si la rutina es nula
+     */
+    public void asignarRutina(Rutina r)
+    {
+        if(r == null) throw new IllegalArgumentException("La rutina no puede ser nula");
+        Rutina actual = getRutinaActual();
+        if(actual != null) actual.archivar();
+        historialRutinas.add(r);
+    }
+
+    /** @return la última rutina activa, o {@code null} si no tiene */
+    public Rutina getRutinaActual()
+    {
+        for(int i = historialRutinas.size() - 1; i >= 0; i--)
+        {
+            if(historialRutinas.get(i).isActiva()) return historialRutinas.get(i);
+        }
+        return null;
+    }
+
+    /** @return copia de todas las rutinas (activa y archivadas), en orden de creación */
+    public ArrayList<Rutina> getHistorialRutinas()
+    {
+        return new ArrayList<>(historialRutinas);
     }
 
     /** Orden natural: apellidos, luego nombres, y DNI como desempate. */
