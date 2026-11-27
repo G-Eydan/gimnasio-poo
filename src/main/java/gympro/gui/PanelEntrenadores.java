@@ -15,11 +15,18 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.table.AbstractTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Pestaña «Entrenadores» (HU-06 · T2): formulario para registrar entrenadores.
@@ -29,6 +36,9 @@ import java.awt.GridLayout;
  *   <li>Un {@link JCheckBox} por cada {@link Especialidad}, creados con un bucle.</li>
  *   <li>Grilla 7 × 3 de disponibilidad: un arreglo 2D de {@link JCheckBox} que se copia al
  *       arreglo 2D {@code boolean} del entrenador.</li>
+ *   <li>Tabla de entrenadores con un {@link JComboBox} «Filtrar por especialidad»
+ *       ({@code buscarEntrenadoresPorEspecialidad}). Al seleccionar uno, el formulario,
+ *       los checkbox y la grilla muestran sus datos (modo consulta).</li>
  * </ul>
  *
  * @author I3
@@ -50,6 +60,11 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
     private final JCheckBox[][] celdas = new JCheckBox[DiaSemana.values().length][Turno.values().length];
     private final JButton btnRegistrar = new JButton("Registrar entrenador");
 
+    private static final String TODAS = "Todas";
+    private final EntrenadorTableModel modeloTabla = new EntrenadorTableModel();
+    private final JTable tabla = new JTable(modeloTabla);
+    private final JComboBox<Object> cboFiltro = new JComboBox<>();
+
     public PanelEntrenadores(Gimnasio gimnasio)
     {
         super(new BorderLayout(10, 8));
@@ -57,14 +72,118 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         add(crearFormulario(), BorderLayout.WEST);
+        add(crearListado(), BorderLayout.CENTER);
         actualizar();
     }
 
-    /** Recarga los datos desde {@code Gimnasio}. */
+    /** Recarga la tabla con el filtro actual, conservando la selección si sigue visible. */
     @Override
     public void actualizar()
     {
-        // El formulario no depende de otros datos; la lista se agrega con la tabla de entrenadores.
+        Entrenador antes = seleccionado();
+        Object filtro = cboFiltro.getSelectedItem();
+        modeloTabla.setFilas(filtro instanceof Especialidad
+                ? gimnasio.buscarEntrenadoresPorEspecialidad((Especialidad) filtro)
+                : gimnasio.listarEntrenadores());
+        if (antes != null)
+        {
+            int fila = modeloTabla.indiceDe(antes);
+            if (fila >= 0)
+            {
+                tabla.setRowSelectionInterval(fila, fila);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Listado y modo consulta
+    // ------------------------------------------------------------------
+
+    private JPanel crearListado()
+    {
+        cboFiltro.addItem(TODAS);
+        for (Especialidad e : Especialidad.values())
+        {
+            cboFiltro.addItem(e);
+        }
+        cboFiltro.addActionListener(e -> actualizar());
+
+        tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabla.setFillsViewportHeight(true);
+        tabla.getSelectionModel().addListSelectionListener(e ->
+        {
+            if (!e.getValueIsAdjusting())
+            {
+                Entrenador sel = seleccionado();
+                if (sel != null)
+                {
+                    mostrar(sel);
+                }
+            }
+        });
+
+        JPanel filtro = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        filtro.add(new JLabel("Filtrar por especialidad:"));
+        filtro.add(cboFiltro);
+
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBorder(BorderFactory.createTitledBorder("Entrenadores"));
+        panel.add(filtro, BorderLayout.NORTH);
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private Entrenador seleccionado()
+    {
+        int fila = tabla.getSelectedRow();
+        return (fila < 0) ? null : modeloTabla.getEntrenador(fila);
+    }
+
+    /** Modo consulta: muestra los datos del entrenador y bloquea el formulario. */
+    private void mostrar(Entrenador e)
+    {
+        txtDni.setText(e.getDni());
+        txtNombres.setText(e.getNombres());
+        txtApellidos.setText(e.getApellidos());
+        txtTelefono.setText(e.getTelefono() == null ? "" : e.getTelefono());
+        txtEmail.setText(e.getEmail() == null ? "" : e.getEmail());
+        txtSueldo.setText(String.format(Locale.US, "%.2f", e.getSueldoBase()));
+        cboTurno.setSelectedItem(e.getTurno());
+        for (Especialidad esp : Especialidad.values())
+        {
+            chkEspecialidades[esp.ordinal()].setSelected(e.tieneEspecialidad(esp));
+        }
+        boolean[][] disponibilidad = e.getDisponibilidad();
+        for (DiaSemana d : DiaSemana.values())
+        {
+            for (Turno t : Turno.values())
+            {
+                celdas[d.ordinal()][t.ordinal()].setSelected(disponibilidad[d.ordinal()][t.ordinal()]);
+            }
+        }
+        setEditable(false);
+    }
+
+    /** En modo consulta los campos no se pueden cambiar; «Limpiar» vuelve al modo registro. */
+    private void setEditable(boolean editable)
+    {
+        for (JTextField campo : new JTextField[]{txtDni, txtNombres, txtApellidos, txtTelefono, txtEmail, txtSueldo})
+        {
+            campo.setEditable(editable);
+        }
+        cboTurno.setEnabled(editable);
+        for (JCheckBox chk : chkEspecialidades)
+        {
+            chk.setEnabled(editable);
+        }
+        for (JCheckBox[] fila : celdas)
+        {
+            for (JCheckBox celda : fila)
+            {
+                celda.setEnabled(editable);
+            }
+        }
+        btnRegistrar.setEnabled(editable);
     }
 
     // ------------------------------------------------------------------
@@ -160,6 +279,14 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
         {
             String dni = txtDni.getText().trim();
             Validador.validarDni(dni);
+            // Se revisa antes de crear el objeto para no gastar un código E00n con un DNI repetido.
+            for (Entrenador otro : gimnasio.listarEntrenadores())
+            {
+                if (otro.getDni().equals(dni))
+                {
+                    throw new DatosInvalidosException("Ya existe un entrenador con DNI " + dni + ".");
+                }
+            }
             String telefono = opcional(txtTelefono);
             String email = opcional(txtEmail);
             double sueldo;
@@ -171,19 +298,24 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
             {
                 throw new DatosInvalidosException("El sueldo base debe ser un número.");
             }
-
-            Entrenador entrenador = new Entrenador(dni, txtNombres.getText().trim(), txtApellidos.getText().trim(),
-                    null, telefono, email, sueldo, (Turno) cboTurno.getSelectedItem());
+            List<Especialidad> elegidas = new ArrayList<>();
             for (Especialidad e : Especialidad.values())
             {
                 if (chkEspecialidades[e.ordinal()].isSelected())
                 {
-                    entrenador.agregarEspecialidad(e);
+                    elegidas.add(e);
                 }
             }
-            if (entrenador.getEspecialidades().isEmpty())
+            if (elegidas.isEmpty())
             {
                 throw new DatosInvalidosException("Marque al menos una especialidad.");
+            }
+
+            Entrenador entrenador = new Entrenador(dni, txtNombres.getText().trim(), txtApellidos.getText().trim(),
+                    null, telefono, email, sueldo, (Turno) cboTurno.getSelectedItem());
+            for (Especialidad e : elegidas)
+            {
+                entrenador.agregarEspecialidad(e);
             }
             // Copiar la grilla al arreglo 2D del entrenador
             for (DiaSemana d : DiaSemana.values())
@@ -207,6 +339,8 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
 
     private void limpiar()
     {
+        tabla.clearSelection();
+        setEditable(true);
         for (JTextField campo : new JTextField[]{txtDni, txtNombres, txtApellidos, txtTelefono, txtEmail, txtSueldo})
         {
             campo.setText("");
@@ -230,5 +364,72 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
     {
         String texto = campo.getText().trim();
         return texto.isEmpty() ? null : texto;
+    }
+    /** Tabla de entrenadores: código, nombre, especialidades, turno, asignados «n/15» y sueldo. */
+    private static final class EntrenadorTableModel extends AbstractTableModel
+    {
+        private static final long serialVersionUID = 1L;
+        private static final String[] COLUMNAS = {"Código", "Nombre", "Especialidades", "Turno", "Asignados", "Sueldo"};
+        private transient List<Entrenador> filas = new ArrayList<>();
+
+        void setFilas(List<Entrenador> lista)
+        {
+            filas = new ArrayList<>(lista);
+            fireTableDataChanged();
+        }
+
+        Entrenador getEntrenador(int fila)
+        {
+            return filas.get(fila);
+        }
+
+        int indiceDe(Entrenador e)
+        {
+            return filas.indexOf(e);
+        }
+
+        @Override
+        public int getRowCount()
+        {
+            return filas.size();
+        }
+
+        @Override
+        public int getColumnCount()
+        {
+            return COLUMNAS.length;
+        }
+
+        @Override
+        public String getColumnName(int c)
+        {
+            return COLUMNAS[c];
+        }
+
+        @Override
+        public Object getValueAt(int fila, int col)
+        {
+            Entrenador e = filas.get(fila);
+            switch (col)
+            {
+                case 0:
+                    return e.getCodigo();
+                case 1:
+                    return e.getNombreCompleto();
+                case 2:
+                    StringBuilder sb = new StringBuilder();
+                    for (Especialidad esp : e.getEspecialidades())
+                    {
+                        sb.append(sb.length() == 0 ? "" : ", ").append(nombreLegible(esp.name()));
+                    }
+                    return sb.toString();
+                case 3:
+                    return nombreLegible(e.getTurno().name());
+                case 4:
+                    return e.getMiembrosAsignados().size() + "/" + Entrenador.MAX_MIEMBROS;
+                default:
+                    return String.format(Locale.US, "S/ %.2f", e.calcularSueldo());
+            }
+        }
     }
 }
