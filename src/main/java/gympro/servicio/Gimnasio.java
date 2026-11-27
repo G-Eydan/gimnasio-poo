@@ -112,14 +112,54 @@ public class Gimnasio implements Serializable {
         return listarMiembrosActivos(LocalDate.now());
     }
 
+    /** Miembros no dados de baja con una membresía vigente en {@code hoy}. */
     public ArrayList<Miembro> listarMiembrosActivos(LocalDate hoy) {
         ArrayList<Miembro> lista = new ArrayList<>();
         for (Miembro m : listarMiembros()) {
-            if (tieneMembresiaVigente(m, hoy)) {
+            if (m.isActivo() && tieneMembresiaVigente(m, hoy)) {
                 lista.add(m);
             }
         }
         return lista;
+    }
+
+    /**
+     * Confirma los cambios hechos a un miembro registrado (HG-01 · T1). El DNI no se
+     * edita (decisión D5): el miembro debe ser el mismo objeto que está registrado con
+     * ese DNI. Vuelve a validar los datos por si se modificaron sin pasar por los setters.
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el miembro es nulo, no es el registrado o tiene datos inválidos
+     */
+    public void actualizarMiembro(Miembro m) throws MiembroNoEncontradoException, DatosInvalidosException {
+        if (m == null) {
+            throw new DatosInvalidosException("El miembro no puede ser nulo.");
+        }
+        Miembro registrado = buscarMiembro(m.getDni());
+        if (registrado != m) {
+            throw new DatosInvalidosException("El DNI " + m.getDni() + " pertenece a otro miembro; el DNI no se puede cambiar.");
+        }
+        if (m.getNombres() == null || m.getNombres().isBlank()
+            || m.getApellidos() == null || m.getApellidos().isBlank()) {
+            throw new DatosInvalidosException("Los nombres y apellidos no pueden estar vacíos.");
+        }
+        if (m.getTelefono() != null) {
+            Validador.validarTelefono(m.getTelefono());
+        }
+        if (m.getEmail() != null) {
+            Validador.validarEmail(m.getEmail());
+        }
+    }
+
+    /**
+     * Baja lógica (decisión D6): el miembro queda inactivo pero no se borra, para
+     * conservar su historial de membresías y pagos. Un miembro dado de baja no puede
+     * contratar ni renovar.
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     */
+    public void darDeBajaMiembro(String dni) throws MiembroNoEncontradoException {
+        buscarMiembro(dni).setActivo(false);
     }
 
     // ==================================================================
@@ -179,6 +219,7 @@ public class Gimnasio implements Serializable {
     public Pago contratarMembresia(String dni, String codPlan, MetodoPago metodo, LocalDate hoy)
             throws MiembroNoEncontradoException, MembresiaActivaException, DatosInvalidosException {
         Miembro miembro = buscarMiembro(dni);
+        validarNoDadoDeBaja(miembro);
         Plan plan = obtenerPlanActivo(codPlan);
         validarMetodoYFecha(metodo, hoy);
 
@@ -208,6 +249,7 @@ public class Gimnasio implements Serializable {
     public Pago renovarMembresia(String dni, String codPlan, MetodoPago metodo, LocalDate hoy)
             throws MiembroNoEncontradoException, MembresiaActivaException, DatosInvalidosException {
         Miembro miembro = buscarMiembro(dni);
+        validarNoDadoDeBaja(miembro);
         Plan plan = obtenerPlanActivo(codPlan);
         validarMetodoYFecha(metodo, hoy);
 
@@ -363,6 +405,12 @@ public class Gimnasio implements Serializable {
             throw new DatosInvalidosException("El plan " + plan.getNombre() + " está desactivado.");
         }
         return plan;
+    }
+
+    private void validarNoDadoDeBaja(Miembro miembro) throws DatosInvalidosException {
+        if (!miembro.isActivo()) {
+            throw new DatosInvalidosException("El miembro " + miembro.getNombreCompleto() + " está dado de baja.");
+        }
     }
 
     private void validarMetodoYFecha(MetodoPago metodo, LocalDate hoy) throws DatosInvalidosException {
