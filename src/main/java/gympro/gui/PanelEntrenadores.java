@@ -1,18 +1,23 @@
 package gympro.gui;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
+import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.DiaSemana;
 import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.Turno;
 import gympro.modelo.persona.Entrenador;
+import gympro.modelo.persona.Miembro;
 import gympro.servicio.Gimnasio;
 import gympro.util.Validador;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,6 +44,8 @@ import java.util.Locale;
  *   <li>Tabla de entrenadores con un {@link JComboBox} «Filtrar por especialidad»
  *       ({@code buscarEntrenadoresPorEspecialidad}). Al seleccionar uno, el formulario,
  *       los checkbox y la grilla muestran sus datos (modo consulta).</li>
+ *   <li>HU-07: {@link JList} con los miembros asignados al entrenador seleccionado, contador
+ *       «n / 15» y botón «Asignar miembro» ({@code gimnasio.asignarEntrenador}).</li>
  * </ul>
  *
  * @author I3
@@ -64,6 +71,11 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
     private final EntrenadorTableModel modeloTabla = new EntrenadorTableModel();
     private final JTable tabla = new JTable(modeloTabla);
     private final JComboBox<Object> cboFiltro = new JComboBox<>();
+
+    private final DefaultListModel<Miembro> modeloAsignados = new DefaultListModel<>();
+    private final JList<Miembro> lstAsignados = new JList<>(modeloAsignados);
+    private final JLabel lblCupo = new JLabel();
+    private final JButton btnAsignar = new JButton("Asignar miembro");
 
     public PanelEntrenadores(Gimnasio gimnasio)
     {
@@ -93,6 +105,7 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
                 tabla.setRowSelectionInterval(fila, fila);
             }
         }
+        mostrarAsignados();
     }
 
     // ------------------------------------------------------------------
@@ -119,6 +132,7 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
                 {
                     mostrar(sel);
                 }
+                mostrarAsignados();
             }
         });
 
@@ -130,7 +144,88 @@ public final class PanelEntrenadores extends JPanel implements Actualizable
         panel.setBorder(BorderFactory.createTitledBorder("Entrenadores"));
         panel.add(filtro, BorderLayout.NORTH);
         panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        panel.add(crearAsignados(), BorderLayout.SOUTH);
         return panel;
+    }
+
+    // ------------------------------------------------------------------
+    // Miembros asignados (HU-07)
+    // ------------------------------------------------------------------
+
+    private JPanel crearAsignados()
+    {
+        btnAsignar.addActionListener(e -> asignarMiembro());
+        lstAsignados.setVisibleRowCount(6);
+
+        JPanel arriba = new JPanel(new BorderLayout());
+        arriba.add(lblCupo, BorderLayout.WEST);
+        arriba.add(btnAsignar, BorderLayout.EAST);
+
+        JPanel panel = new JPanel(new BorderLayout(0, 4));
+        panel.setBorder(BorderFactory.createTitledBorder("Miembros asignados"));
+        panel.add(arriba, BorderLayout.NORTH);
+        panel.add(new JScrollPane(lstAsignados), BorderLayout.CENTER);
+        return panel;
+    }
+
+    /** Muestra los miembros del entrenador seleccionado y el contador «n / 15». */
+    private void mostrarAsignados()
+    {
+        modeloAsignados.clear();
+        Entrenador e = seleccionado();
+        btnAsignar.setEnabled(e != null);
+        if (e == null)
+        {
+            lblCupo.setText("Seleccione un entrenador.");
+            return;
+        }
+        for (Miembro m : e.getMiembrosAsignados())
+        {
+            modeloAsignados.addElement(m);
+        }
+        lblCupo.setText(e.getCodigo() + " · " + e.getMiembrosAsignados().size() + " / " + Entrenador.MAX_MIEMBROS);
+    }
+
+    /**
+     * Pide un miembro con membresía activa (en un {@link JComboBox} dentro de un
+     * {@link JOptionPane}) y lo asigna al entrenador seleccionado. Si no hay cupo,
+     * muestra el error de {@link EntrenadorSinCupoException}.
+     */
+    private void asignarMiembro()
+    {
+        Entrenador e = seleccionado();
+        if (e == null)
+        {
+            return;
+        }
+        List<Miembro> activos = gimnasio.listarMiembrosActivos();
+        if (activos.isEmpty())
+        {
+            JOptionPane.showMessageDialog(this, "No hay miembros con membresía activa.", "Asignar miembro",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        JComboBox<Miembro> cboMiembros = new JComboBox<>(activos.toArray(new Miembro[0]));
+        int opcion = JOptionPane.showConfirmDialog(this, cboMiembros, "Asignar miembro a " + e.getNombreCompleto(),
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (opcion != JOptionPane.OK_OPTION || cboMiembros.getSelectedItem() == null)
+        {
+            return;
+        }
+        Miembro m = (Miembro) cboMiembros.getSelectedItem();
+        try
+        {
+            gimnasio.asignarEntrenador(m.getDni(), e.getCodigo());
+        }
+        catch (EntrenadorSinCupoException ex)
+        {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Sin cupo", JOptionPane.ERROR_MESSAGE);
+        }
+        catch (MiembroNoEncontradoException | DatosInvalidosException ex)
+        {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Asignar miembro", JOptionPane.ERROR_MESSAGE);
+        }
+        actualizar();
     }
 
     private Entrenador seleccionado()

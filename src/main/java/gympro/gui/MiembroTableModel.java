@@ -112,8 +112,7 @@ public class MiembroTableModel extends AbstractTableModel
             case COL_ESTADO:
                 return m.getEstadoInscripcion();
             default:
-                // Se completa con Miembro.getEntrenador() cuando se fusione HU-07 · T1 (#39).
-                return SIN_DATO;
+                return (m.getEntrenador() == null) ? SIN_DATO : m.getEntrenador().getNombreCompleto();
         }
     }
 }
