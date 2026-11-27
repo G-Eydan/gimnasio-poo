@@ -28,7 +28,9 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     private final ArrayList<Membresia> historialMembresias = new ArrayList<>();
     /** Baja lógica (decisión D6): un miembro dado de baja no se borra, solo queda inactivo. */
     private boolean activo = true;
-    // Sprint 2: peso, altura, entrenador e historial de rutinas
+    /** Entrenador asignado (asociación 0..1); lo cambia Gimnasio.asignarEntrenador (HU-07). */
+    private Entrenador entrenador;
+    // Pendiente: peso, altura e historial de rutinas
 
     /** Constructor corto: solo DNI, nombres y apellidos. */
     public Miembro(String dni, String nombres, String apellidos) throws DatosInvalidosException
@@ -197,6 +199,18 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     public void setActivo(boolean activo)
     {
         this.activo = activo;
+    }
+
+    /** @return el entrenador asignado, o {@code null} si no tiene */
+    public Entrenador getEntrenador()
+    {
+        return entrenador;
+    }
+
+    /** Lo usa {@code Gimnasio.asignarEntrenador}, que mantiene la lista del entrenador sincronizada. */
+    public void setEntrenador(Entrenador entrenador)
+    {
+        this.entrenador = entrenador;
     }
 
     /** Orden natural: apellidos, luego nombres, y DNI como desempate. */

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.EstadoMembresia;
@@ -211,6 +212,38 @@ public class Gimnasio implements Serializable {
             }
         }
         return lista;
+    }
+
+    /**
+     * Asigna (o reasigna) un entrenador a un miembro con membresía activa (HU-07).
+     *
+     * <p>Primero se agrega al entrenador nuevo: si no tiene cupo, la excepción sale
+     * <b>antes</b> de quitar al miembro del entrenador anterior, y todo queda como estaba.</p>
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el entrenador no existe o el miembro no tiene membresía activa
+     * @throws EntrenadorSinCupoException   si el entrenador ya tiene 15 miembros (CP-10)
+     */
+    public void asignarEntrenador(String dni, String codEntrenador)
+            throws MiembroNoEncontradoException, DatosInvalidosException, EntrenadorSinCupoException {
+        Miembro m = buscarMiembro(dni);
+        Entrenador nuevo = buscarEntrenador(codEntrenador);
+        if (nuevo == null) {
+            throw new DatosInvalidosException("No existe el entrenador " + codEntrenador + ".");
+        }
+        Membresia vigente = m.getMembresiaVigente();
+        if (!m.isActivo() || vigente == null || vigente.getEstado() != EstadoMembresia.ACTIVA) {
+            throw new DatosInvalidosException("El miembro " + m.getNombreCompleto() + " no tiene una membresía activa.");
+        }
+        Entrenador anterior = m.getEntrenador();
+        if (anterior == nuevo) {
+            return;
+        }
+        nuevo.asignarMiembro(m);
+        if (anterior != null) {
+            anterior.quitarMiembro(m);
+        }
+        m.setEntrenador(nuevo);
     }
 
     /** Entrenadores de más a menos miembros asignados (RF-27), con el orden natural de {@link Entrenador}. */
