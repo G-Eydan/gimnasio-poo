@@ -1,6 +1,7 @@
 package gympro.modelo.persona;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
 import gympro.modelo.enums.DiaSemana;
 import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.Turno;
@@ -140,14 +141,19 @@ public class Entrenador extends Persona implements Comparable<Entrenador>
     }
 
     /**
-     * Asigna un miembro al entrenador.
+     * Asigna un miembro al entrenador. Si ya estaba asignado, no hace nada.
      *
-     * @return false si el miembro es nulo, ya estaba asignado o no hay cupo
+     * @throws EntrenadorSinCupoException si ya tiene {@link #MAX_MIEMBROS} miembros (RN-08)
+     * @throws IllegalArgumentException   si el miembro es nulo
      */
-    public boolean asignarMiembro(Miembro m)
+    public void asignarMiembro(Miembro m) throws EntrenadorSinCupoException
     {
-        if(m == null || !tieneCupo() || miembrosAsignados.contains(m)) return false;
-        return miembrosAsignados.add(m);
+        if(m == null) throw new IllegalArgumentException("El miembro no puede ser nulo");
+        if(miembrosAsignados.contains(m)) return;
+        if(!tieneCupo())
+            throw new EntrenadorSinCupoException("El entrenador " + getNombreCompleto() + " ya tiene "
+                    + MAX_MIEMBROS + " miembros asignados.");
+        miembrosAsignados.add(m);
     }
 
     /** @return true si el miembro estaba asignado y se quitó */
