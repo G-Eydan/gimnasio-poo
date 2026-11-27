@@ -26,6 +26,8 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
 
     private final String codigo;
     private final ArrayList<Membresia> historialMembresias = new ArrayList<>();
+    /** Baja lógica (decisión D6): un miembro dado de baja no se borra, solo queda inactivo. */
+    private boolean activo = true;
     // Sprint 2: peso, altura, entrenador e historial de rutinas
 
     /** Constructor corto: solo DNI, nombres y apellidos. */
@@ -184,6 +186,17 @@ public abstract class Miembro extends Persona implements Descontable, Comparable
     public String getCodigo()
     {
         return codigo;
+    }
+
+    /** @return false si el miembro fue dado de baja (baja lógica, HG-01) */
+    public boolean isActivo()
+    {
+        return activo;
+    }
+
+    public void setActivo(boolean activo)
+    {
+        this.activo = activo;
     }
 
     /** Orden natural: apellidos, luego nombres, y DNI como desempate. */
