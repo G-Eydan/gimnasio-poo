@@ -4,6 +4,7 @@ import gympro.modelo.persona.Usuario;
 import gympro.servicio.Gimnasio;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -17,6 +18,7 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -32,7 +34,10 @@ import java.time.format.DateTimeFormatter;
  * <ul>
  *   <li><b>NORTH</b>: {@link JMenuBar} con Archivo, Base de datos y Ayuda, con
  *       mnemónicos (Alt + letra) y Ctrl+Q para salir.</li>
- *   <li><b>CENTER</b>: {@link JTabbedPane} con una pestaña por módulo permitido.</li>
+ *   <li><b>CENTER</b>: {@link JTabbedPane} con una pestaña por módulo permitido: Miembros,
+ *       Planes y Pagos, Entrenadores y Rutinas tienen su panel; Dashboard y Reportes llegan
+ *       en el Sprint 4. Al cambiar de pestaña, el panel {@link Actualizable} recarga sus
+ *       datos (un miembro registrado en «Miembros» aparece en «Rutinas» sin reiniciar).</li>
  *   <li><b>SOUTH</b>: barra de estado con el usuario y el rol, un área de mensajes
  *       ({@link #mostrarMensaje(String)}) y un reloj que actualiza un {@link Timer}
  *       cada segundo.</li>
@@ -65,17 +70,30 @@ public final class VentanaPrincipal extends JFrame
 
     private final transient Gimnasio gimnasio;
     private final transient Usuario usuario;
+    /** Qué hacer al cerrar sesión (por ejemplo, volver al login); {@code null} oculta la opción. */
+    private final transient Runnable alCerrarSesion;
     private final JTabbedPane pestanas = new JTabbedPane();
     private final JLabel lblMensaje = new JLabel(MENSAJE_INICIAL);
     private final JLabel lblReloj = new JLabel();
     private final Timer reloj = new Timer(1000, e -> actualizarReloj());
     private final Timer limpiarMensaje = new Timer(DURACION_MENSAJE_MS, e -> lblMensaje.setText(MENSAJE_INICIAL));
 
+    /** Ventana sin la opción «Cerrar sesión». */
     public VentanaPrincipal(Gimnasio gimnasio, Usuario usuario)
+    {
+        this(gimnasio, usuario, null);
+    }
+
+    /**
+     * @param alCerrarSesion se ejecuta después de cerrar la ventana con Archivo → Cerrar sesión
+     *                       (por ejemplo, abrir de nuevo el login); {@code null} oculta la opción
+     */
+    public VentanaPrincipal(Gimnasio gimnasio, Usuario usuario, Runnable alCerrarSesion)
     {
         super(gimnasio.getNombre() + " - " + usuario.getUsername() + " (" + usuario.getRol() + ")");
         this.gimnasio = gimnasio;
         this.usuario = usuario;
+        this.alCerrarSesion = alCerrarSesion;
 
         setJMenuBar(crearMenu());
         crearPestanas();
@@ -91,7 +109,8 @@ public final class VentanaPrincipal extends JFrame
                 confirmarSalida();
             }
         });
-        setMinimumSize(new Dimension(800, 500));
+        setMinimumSize(new Dimension(900, 600));
+        setSize(1180, 800);
         setLocationRelativeTo(null);
     }
 
@@ -145,6 +164,17 @@ public final class VentanaPrincipal extends JFrame
             }
             archivo.addSeparator();
         }
+        if (alCerrarSesion != null)
+        {
+            JMenuItem cerrarSesion = new JMenuItem("Cerrar sesión");
+            cerrarSesion.setMnemonic(KeyEvent.VK_C);
+            cerrarSesion.addActionListener(e ->
+            {
+                dispose();
+                alCerrarSesion.run();
+            });
+            archivo.add(cerrarSesion);
+        }
         JMenuItem salir = new JMenuItem("Salir");
         salir.setMnemonic(KeyEvent.VK_S);
         salir.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
@@ -182,20 +212,51 @@ public final class VentanaPrincipal extends JFrame
         return item;
     }
 
-    /** Agrega solo las pestañas que el rol puede usar; cada una muestra un aviso hasta que llegue su panel. */
+    /** Agrega solo las pestañas que el rol puede usar y recarga el panel al seleccionarlo. */
     private void crearPestanas()
     {
         for (String[] pestana : PESTANAS)
         {
             if (usuario.puedeAcceder(pestana[1]))
             {
-                JLabel aviso = new JLabel(pestana[0] + ": disponible en el Sprint 3", SwingConstants.CENTER);
-                aviso.setForeground(Color.GRAY);
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(aviso, BorderLayout.CENTER);
-                pestanas.addTab(pestana[0], panel);
+                pestanas.addTab(pestana[0], crearPanel(pestana[0], pestana[1]));
             }
         }
+        pestanas.addChangeListener(e ->
+        {
+            Component actual = pestanas.getSelectedComponent();
+            if (actual instanceof Actualizable)
+            {
+                ((Actualizable) actual).actualizar();
+            }
+        });
+    }
+
+    /** Panel real de cada módulo; los que aún no existen muestran un aviso. */
+    private JComponent crearPanel(String titulo, String modulo)
+    {
+        switch (modulo)
+        {
+            case Usuario.MODULO_MIEMBROS:
+                return new PanelMiembros(gimnasio);
+            case Usuario.MODULO_PLANES_PAGOS:
+                return new PanelPlanesPagos(gimnasio);
+            case Usuario.MODULO_ENTRENADORES:
+                return new PanelEntrenadores(gimnasio);
+            case Usuario.MODULO_RUTINAS:
+                return new PanelRutinas(gimnasio);
+            default:
+                return panelPendiente(titulo, "Sprint 4");
+        }
+    }
+
+    private static JPanel panelPendiente(String titulo, String sprint)
+    {
+        JLabel aviso = new JLabel(titulo + ": disponible en el " + sprint, SwingConstants.CENTER);
+        aviso.setForeground(Color.GRAY);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(aviso, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel crearBarraEstado()

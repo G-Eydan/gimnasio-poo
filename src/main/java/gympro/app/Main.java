@@ -11,8 +11,9 @@ import javax.swing.SwingUtilities;
 
 /**
  * Punto de entrada de GymPro. Abre la ventana de login (HU-12) y, al ingresar, la
- * ventana principal con los módulos que permite el rol. Mientras las pestañas no tengan
- * contenido (Sprint 3), el menú de consola sigue disponible en paralelo.
+ * ventana principal con los módulos que permite el rol. Desde el Sprint 3 todo se usa
+ * desde la GUI (decisión D3): el menú de consola ({@link MenuConsola}) ya no se abre en
+ * paralelo, aunque la clase se conserva.
  *
  * @author I2
  */
@@ -23,15 +24,15 @@ public class Main
         Gimnasio gimnasio = new Gimnasio("GymPro");
         registrarUsuariosDePrueba(gimnasio);
 
-        SwingUtilities.invokeLater(() ->
-                new VentanaLogin(gimnasio, usuario -> iniciarSesion(gimnasio, usuario)).setVisible(true));
+        SwingUtilities.invokeLater(() -> abrirLogin(gimnasio));
     }
 
-    /** Se llama desde el hilo de Swing al ingresar correctamente. */
-    private static void iniciarSesion(Gimnasio gimnasio, Usuario usuario)
+    /** Muestra el login; al ingresar abre la ventana principal, y al cerrar sesión vuelve aquí. */
+    private static void abrirLogin(Gimnasio gimnasio)
     {
-        new VentanaPrincipal(gimnasio, usuario).setVisible(true);
-        abrirMenuConsola(gimnasio, usuario);
+        new VentanaLogin(gimnasio, usuario ->
+                new VentanaPrincipal(gimnasio, usuario, () -> abrirLogin(gimnasio)).setVisible(true))
+                .setVisible(true);
     }
 
     /** Los 3 usuarios de prueba de HU-12, uno por rol. */
@@ -40,17 +41,5 @@ public class Main
         gimnasio.registrarUsuario(new Usuario("admin", "admin123", Rol.ADMINISTRADOR));
         gimnasio.registrarUsuario(new Usuario("recepcion", "recepcion123", Rol.RECEPCIONISTA));
         gimnasio.registrarUsuario(new Usuario("entrenador", "entrenador123", Rol.ENTRENADOR));
-    }
-
-    /** El menú de consola lee del teclado, así que corre en su propio hilo y no en el de Swing. */
-    private static void abrirMenuConsola(Gimnasio gimnasio, Usuario usuario)
-    {
-        Thread hilo = new Thread(() ->
-        {
-            System.out.println("Sesión iniciada: " + usuario);
-            new MenuConsola(gimnasio).iniciar();
-            System.exit(0);
-        }, "menu-consola");
-        hilo.start();
     }
 }
