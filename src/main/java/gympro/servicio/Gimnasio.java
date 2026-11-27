@@ -13,10 +13,12 @@ import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.EstadoMembresia;
 import gympro.modelo.enums.MetodoPago;
+import gympro.modelo.enums.Objetivo;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
 import gympro.modelo.entrenamiento.Ejercicio;
+import gympro.modelo.entrenamiento.Rutina;
 import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.GrupoMuscular;
 import gympro.modelo.persona.Entrenador;
@@ -59,6 +61,7 @@ public class Gimnasio implements Serializable {
     // Contadores de códigos (de instancia, para que se guarden con el respaldo .dat)
     private int contadorMembresias = 0;
     private int contadorPagos = 0;
+    private int contadorRutinas = 0;
 
     public Gimnasio(String nombre, String ruc, String direccion) {
         this.nombre = nombre;
@@ -294,6 +297,30 @@ public class Gimnasio implements Serializable {
             }
         }
         return lista;
+    }
+
+    /**
+     * Crea una rutina para un miembro con membresía activa (RN-11). La rutina anterior
+     * del miembro, si tenía, se archiva y queda en su historial (RN-10). El entrenador de
+     * la rutina es el que tiene asignado el miembro (puede ser {@code null}).
+     *
+     * <p>Por la decisión D4, en el Sprint 3 la GUI permite crear rutinas a los roles
+     * ADMINISTRADOR y ENTRENADOR; vincular usuario y entrenador queda para el Sprint 4.</p>
+     *
+     * @throws MiembroNoEncontradoException si no hay un miembro con ese DNI
+     * @throws DatosInvalidosException      si el miembro no tiene membresía activa, falta el nombre o el objetivo
+     */
+    public Rutina crearRutina(String dni, String nombre, Objetivo objetivo)
+            throws MiembroNoEncontradoException, DatosInvalidosException {
+        Miembro m = buscarMiembro(dni);
+        Membresia vigente = m.getMembresiaVigente();
+        if (!m.isActivo() || vigente == null || vigente.getEstado() != EstadoMembresia.ACTIVA) {
+            throw new DatosInvalidosException("Solo se crean rutinas a miembros con membresía activa (RN-11).");
+        }
+        Rutina r = new Rutina(String.format("R%04d", contadorRutinas + 1), nombre, objetivo, m, m.getEntrenador());
+        contadorRutinas++;
+        m.asignarRutina(r);
+        return r;
     }
 
     /** Los 15 ejercicios con los que empieza el catálogo (guía, 7.5.2). */
