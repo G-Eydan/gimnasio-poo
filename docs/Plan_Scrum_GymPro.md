@@ -25,7 +25,7 @@ Proyecto final "GymPro" — Equipo de 2 integrantes (desde el 27/11/2026; en los
 13. [Gestión de riesgos](#13-gestión-de-riesgos)
 14. [Plan de comunicación](#14-plan-de-comunicación)
 15. [Plantillas](#15-plantillas)
-16. [Presentación final (jueves 10/12)](#16-preparación-de-la-presentación-final-jueves-1012)
+16. [Presentación final (lunes 07/12)](#16-preparación-de-la-presentación-final-lunes-0712)
 17. [Ciclo de vida y relación con el sílabo](#17-ciclo-de-vida-y-relación-con-el-sílabo-tema-16)
 
 ---
@@ -34,16 +34,16 @@ Proyecto final "GymPro" — Equipo de 2 integrantes (desde el 27/11/2026; en los
 
 | Aspecto | Valor |
 |---|---|
-| Metodología | Scrum adaptado a un equipo académico de 3 personas |
+| Metodología | Scrum adaptado a un equipo académico (3 personas en los sprints 1-3; 2 desde el Sprint 4) |
 | Ciclo de vida | Iterativo e incremental: consola → GUI → archivos → base de datos |
-| Duración del sprint | 1 semana (7 días), de **viernes a jueves** |
-| Último día de cada sprint | **Jueves** (Sprint Review + Retrospectiva) |
-| Cantidad de sprints | 5 |
+| Duración del sprint | S1 y S2: 1 semana, de viernes a jueves · S3: lunes a viernes · S4: 9 días, de sábado a domingo |
+| Último día de cada sprint | Sprint Review + Retrospectiva |
+| Cantidad de sprints | 4 (los antiguos Sprints 4 y 5 se unieron en uno solo) |
 | Inicio | Viernes 06/11/2026 (día siguiente al 2do parcial) |
 | Fin del Sprint 1 | **Jueves 12/11/2026** |
-| Fin del proyecto | Jueves 10/12/2026 (fin del Sprint 5, presentación y tercera evaluación) |
+| Fin del proyecto | Domingo 06/12/2026 (fin del Sprint 4) · **presentación final el lunes 07/12/2026** |
 | Backlog total | 94 puntos de historia (22 elementos) |
-| Velocidad meta | ~19 puntos por sprint |
+| Velocidad meta | ~19 puntos por semana (el Sprint 4 compromete 38 en 9 días, con línea de corte) |
 
 > **Idea central:** los sprints siguen el avance del curso. Lo que se enseña en clase durante la semana se aplica en el sprint de esa misma semana o de la siguiente (GUI → archivos → base de datos).
 
@@ -55,9 +55,10 @@ Proyecto final "GymPro" — Equipo de 2 integrantes (desde el 27/11/2026; en los
 |---|---|---|---|---|---|
 | **S1** | 06/11/2026 | 12/11/2026 | Temas 1-10 (repaso), inicio GUI (12) | Modelo de clases y primeras funciones en consola | 18 |
 | **S2** | 13/11/2026 | 19/11/2026 | GUI fundamentos (12) | Membresías, pagos, vencimientos + login gráfico | 19 |
-| **S3** | 20/11/2026 | 26/11/2026 | GUI avanzada (13) | Aplicación gráfica completa: miembros, planes, entrenadores, rutinas | 19 |
-| **S4** | 27/11/2026 | 03/12/2026 | Archivos (14) | Reportes, gráficos, archivos de texto, binarios y de objetos | 19 |
-| **S5** | 04/12/2026 | 10/12/2026 | BD y JDBC (15), ágiles (16) | Base de datos, pruebas finales, documento y **presentación** | 19 |
+| **S3** | lun 23/11/2026 | vie 27/11/2026 | GUI avanzada (13) | Aplicación gráfica completa: miembros, planes, entrenadores, rutinas | 19 |
+| **S4** | sáb 28/11/2026 | dom 06/12/2026 | Archivos (14), BD y JDBC (15), ágiles (16) | Reportes y gráficos; archivos de texto, binarios y de objetos; base de datos; documento y preparación de la **presentación** | 38 |
+
+> Las columnas «Inicio (vie)» y «Fin (jue)» valen para S1 y S2; S3 y S4 tienen las fechas indicadas. La presentación final es el **lunes 07/12/2026**.
 
 ```mermaid
 gantt
@@ -67,13 +68,12 @@ gantt
     section Sprints
     S1 Modelo y consola              :s1, 2026-11-06, 7d
     S2 Membresías, pagos y login     :s2, after s1, 7d
-    S3 GUI completa                  :s3, after s2, 7d
-    S4 Reportes y archivos           :s4, after s3, 7d
-    S5 Base de datos y cierre        :s5, after s4, 7d
+    S3 GUI completa                  :s3, 2026-11-23, 5d
+    S4 Archivos, reportes, BD y cierre :s4, 2026-11-28, 9d
     section Hitos
-    Code freeze                      :milestone, 2026-12-08, 0d
-    Ensayo general                   :milestone, 2026-12-09, 0d
-    Presentación final               :crit, milestone, 2026-12-10, 0d
+    Code freeze                      :milestone, 2026-12-05, 0d
+    Ensayo general                   :milestone, 2026-12-06, 0d
+    Presentación final               :crit, milestone, 2026-12-07, 0d
 ```
 
 ### Hitos importantes
@@ -82,11 +82,11 @@ gantt
 |---|---|
 | jue 12/11 | Fin S1: modelo de clases en Java funcionando en consola. |
 | jue 19/11 | Fin S2: ciclo completo de membresía (contratar, pagar, vencer). |
-| jue 26/11 | Fin S3: aplicación Swing navegable con todas las pestañas. |
-| jue 03/12 | Fin S4: los datos se guardan en archivos; reportes con gráficos. |
-| mar 08/12 | **Code freeze:** desde esta fecha sólo se corrigen errores, no se agregan funciones. |
-| mié 09/12 | Ensayo general de la presentación. |
-| jue 10/12 | Fin S5: entrega final y presentación del proyecto. |
+| vie 27/11 | Fin S3: aplicación Swing navegable con todas las pestañas (`v0.3`). |
+| jue 03/12 | Hito interno del S4: los datos se guardan en archivos; reportes con gráficos. |
+| sáb 05/12 | **Code freeze:** desde esta fecha solo se corrigen errores, no se agregan funciones. |
+| dom 06/12 | Fin S4: ensayo general, tag `v1.0`, review y retrospectiva final. |
+| **lun 07/12** | **Presentación final del proyecto.** |
 
 ---
 
@@ -99,7 +99,7 @@ En Scrum, el Product Owner (PO) y el Scrum Master (SM) son personas distintas y 
 | David Rodrigo Jove Choquecota — I2 (líder) | Scrum Master | Interfaz gráfica, lógica de negocio e integración |
 | Eydan Fabricio Mayna Mollapaza — I3 | Product Owner | Modelo, persistencia (archivos y JDBC) y datos de prueba |
 
-> **Cambio de equipo (27/11/2026):** Luis Alberto Vera Salcedo (I1, Product Owner y lógica de negocio) dejó el proyecto al cierre del Sprint 3. Su rol de PO pasa a I3 y su área técnica se reparte: la lógica de negocio y los reportes (`Gimnasio`, `ServicioReportes`, comprobantes) pasan a I2, y la transacción en la base de datos, los datos de prueba y la especificación final pasan a I3 (detalle en el [Sprint 4](#sprint-4--sáb-2811-al-dom-0612-2026--38-puntos--v10)). Los identificadores I2 e I3 se mantienen para que coincidan con las actas, issues y Pull Requests anteriores.
+> **Cambio de equipo (27/11/2026):** Luis Alberto Vera Salcedo (I1, Product Owner y lógica de negocio) dejó el proyecto al cierre del Sprint 3. Su rol de PO pasa a I3 y su área técnica se reparte: la lógica de negocio y los reportes (`Gimnasio`, `ServicioReportes`, comprobantes) pasan a I2, y la transacción en la base de datos, los datos de prueba y la especificación final pasan a I3 (detalle en el [Sprint 4](#sprint-4--sáb-2811-al-dom-06122026--38-puntos--v10)). Los identificadores I2 e I3 se mantienen para que coincidan con las actas, issues y Pull Requests anteriores.
 
 ### Integrante 2 (I2) — Scrum Master + desarrollador de interfaz gráfica y lógica de negocio
 
@@ -138,7 +138,7 @@ En Scrum, el Product Owner (PO) y el Scrum Master (SM) son personas distintas y 
 
 ## 4. Eventos de Scrum y horario semanal
 
-Todos los sprints tienen el mismo ritmo semanal. Ajustar las horas al horario de clases del grupo (el curso tiene clases lunes/jueves, lunes/martes o martes/miércoles según el docente).
+Los sprints de una semana siguen este ritmo. Ajustar las horas al horario de clases del grupo (el curso tiene clases lunes/jueves, lunes/martes o martes/miércoles según el docente).
 
 | Día | Evento | Duración | Modalidad | Responsable |
 |---|---|---|---|---|
@@ -151,6 +151,8 @@ Todos los sprints tienen el mismo ritmo semanal. Ajustar las horas al horario de
 | **Jueves** (último día) | Daily + integración | 15 min | Meet | SM |
 | | Sprint Review | 40 min | Meet / presencial | PO |
 | | Retrospectiva | 20 min | Meet | SM |
+
+> Este ritmo semanal es el de los Sprints 1 y 2. El Sprint 4 dura 9 días (sábado 28/11 a domingo 06/12) y tiene su propio calendario en la [sección 9](#sprint-4--sáb-2811-al-dom-06122026--38-puntos--v10): planning el sábado, revisión de mitad el martes y review y retrospectiva el domingo.
 
 ### 4.1 Sprint Planning (viernes, 60 min)
 
@@ -198,7 +200,7 @@ Las dailies asíncronas se escriben en el grupo antes de las 22:00. Si alguien e
 | Sprint Backlog | Columna "Por hacer" del tablero del sprint actual | Objetivo del sprint |
 | Incremento | Rama `main` de GitHub con un tag por sprint (`v0.1` … `v1.0`) | Definition of Done |
 
-> **Objetivo del producto:** "Entregar el 10/12/2026 un sistema de escritorio en Java que permita administrar miembros, membresías, pagos, entrenadores y rutinas de un gimnasio, con reportes de ingresos y persistencia en archivos y base de datos, aplicando todos los temas del curso."
+> **Objetivo del producto:** "Entregar el 07/12/2026 un sistema de escritorio en Java que permita administrar miembros, membresías, pagos, entrenadores y rutinas de un gimnasio, con reportes de ingresos y persistencia en archivos y base de datos, aplicando todos los temas del curso."
 
 **Artefactos de apoyo** (no oficiales de Scrum, pero útiles):
 
@@ -242,6 +244,7 @@ El factor 0.8 descuenta reuniones, dudas y tiempos muertos. En semanas de exáme
 
 - Velocidad inicial supuesta: **18-19 puntos por sprint**.
 - Desde el Sprint 2 se usa la velocidad **real** promedio de los sprints anteriores (sólo cuentan las historias **aceptadas** en la review).
+- El Sprint 4 dura 9 días y une dos sprints: compromete 38 puntos con una línea de corte (HU-15 y HU-09) que lo deja en 32 si el equipo va atrasado.
 
 ---
 
@@ -269,14 +272,14 @@ Ordenado por prioridad (el orden lo decide el PO).
 | HU-10 | Como administrador quiero ver los ingresos por periodo con gráficos | Media | 8 | S4 |
 | HU-11 | Como administrador quiero conocer los planes más solicitados | Media | 3 | S4 |
 | HU-13 | Como administrador quiero respaldar, importar y exportar datos (archivos) | Media | 5 | S4 |
-| HU-14 | Como administrador quiero que los datos se guarden en una base de datos | Alta | 8 | S5 |
-| HU-15 | Como miembro quiero recibir mi comprobante y mi rutina en un archivo de texto | Baja | 3 | S5 |
-| HT-05 | Cargar datos de prueba (miembros, planes, pagos) para la demostración | Media | 2 | S5 |
-| HT-06 | Documento final, diagrama UML final y manual de usuario | Alta | 3 | S5 |
-| HT-07 | Preparar diapositivas, guion y ensayo de la presentación | Alta | 3 | S5 |
+| HU-14 | Como administrador quiero que los datos se guarden en una base de datos | Alta | 8 | S4 |
+| HU-15 | Como miembro quiero recibir mi comprobante y mi rutina en un archivo de texto | Baja | 3 | S4 |
+| HT-05 | Cargar datos de prueba (miembros, planes, pagos) para la demostración | Media | 2 | S4 |
+| HT-06 | Documento final, diagrama UML final y manual de usuario | Alta | 3 | S4 |
+| HT-07 | Preparar diapositivas, guion y ensayo de la presentación | Alta | 3 | S4 |
 | | | **Total** | **94** | |
 
-**Puntos por sprint:** S1 = 18 · S2 = 19 · S3 = 19 · S4 = 19 · S5 = 19
+**Puntos por sprint:** S1 = 18 · S2 = 19 · S3 = 19 · S4 = 38 (antiguos S4 y S5 unidos)
 
 ### 7.1 Criterios de aceptación
 
@@ -401,8 +404,8 @@ Ordenado por prioridad (el orden lo decide el PO).
 
 #### HT-07 — Presentación (3 pts)
 - [ ] Diapositivas (máximo 12) y guion de la demostración.
-- [ ] Ensayo completo cronometrado el miércoles 09/12.
-- [ ] Video de respaldo de la demo por si falla algo el día 10/12.
+- [ ] Ensayo completo cronometrado el domingo 06/12.
+- [ ] Video de respaldo de la demo por si falla algo el lunes 07/12.
 
 ---
 
@@ -429,7 +432,7 @@ Ordenado por prioridad (el orden lo decide el PO).
 
 ### 8.3 Definition of Done del incremento (fin de cada sprint)
 
-- [ ] `develop` se fusiona en `main` y se crea el tag `v0.N` (`v1.0` en el S5).
+- [ ] `develop` se fusiona en `main` y se crea el tag `v0.N` (`v1.0` en el S4).
 - [ ] La aplicación arranca desde `Main` sin errores en las computadoras de los 2 integrantes.
 
 ---
@@ -490,87 +493,79 @@ Formato de las tareas: responsable, descripción y horas estimadas. Las horas so
 
 **Demo del jueves 19/11:** login gráfico con los 3 roles; en consola, contratar una membresía con el desglose del ejemplo (S/ 335.16), intentar contratar otra (error), renovar, y ver las listas de vencidas y por vencer.
 
-### Sprint 3 — vie 20/11 al jue 26/11/2026 · 19 puntos · `v0.3`
+### Sprint 3 — lun 23/11 al vie 27/11/2026 · 19 puntos · `v0.3`
 
 > **Objetivo:** "Que todo el sistema se use desde la interfaz gráfica: miembros, planes y pagos, entrenadores y rutinas."
 
 **Historias:** HG-01 (5), HU-06 (3), HU-07 (3), HU-08 (8)
 
-| Historia | Resp. | Tarea | Horas |
+El sprint se movió al lunes 23 – viernes 27 (5 días). I1 e I3 no registraron avance y el viernes se activó el plan B: I2 hizo con su propio usuario las tareas de ambos (detalle en el [burndown](actas/Sprint3_Burndown.md) y las [actas](actas/Sprint3_Review.md)).
+
+| Historia | Resp. (real) | Tarea | Horas |
 |---|---|---|---|
 | HG-01 | I2 | `VentanaPrincipal`: `JMenuBar`, `JTabbedPane`, barra de estado con `Timer` | 2 |
 | HG-01 | I2 | `PanelMiembros` con `MiembroTableModel`, búsqueda en vivo y `DialogoMiembro` | 3 |
-| HG-01 | I1 | `PanelPlanesPagos` con recálculo en vivo (`ItemListener`) | 3 |
-| HG-01 | I2 | `EstadoCellRenderer` con colores | 1 |
-| HU-06 | I3 | `PanelEntrenadores`: `JCheckBox` de especialidades y grilla 7×3 | 2.5 |
-| HU-07 | I3 | `asignarEntrenador` con control de cupo + botón en la GUI | 2 |
-| HU-08 | I1 | `Gimnasio.crearRutina` y catálogo de ejercicios | 2 |
-| HU-08 | I3 | `PanelRutinas`: `JList` del catálogo, `JSpinner`, `JTable` y `JProgressBar` | 3.5 |
-| HU-08 | I1 | Pruebas CP-10 a CP-13 | 1.5 |
-| — | Todos | Eventos Scrum | 2 c/u |
+| HG-01 | I2 (plan B; era de I1) | `actualizarMiembro` / `darDeBajaMiembro` y `PanelPlanesPagos` con recálculo en vivo (`ItemListener`) | 4.5 |
+| HG-01 | I2 | `EstadoCellRenderer` con colores y paneles conectados en `VentanaPrincipal` | 1 |
+| HU-06 | I2 (plan B; era de I3) | `Entrenador` y `Gimnasio`; `PanelEntrenadores` con `JCheckBox` y grilla 7×3 | 4 |
+| HU-07 | I2 (plan B; era de I3) | `asignarEntrenador` con control de cupo + botón en la GUI | 2.5 |
+| HU-08 | I2 (plan B; era de I1) | `Rutina` completa, `Gimnasio.crearRutina`, catálogo y pruebas CP-10 a CP-13 | 5 |
+| HU-08 | I2 (plan B; era de I3) | `PanelRutinas`: `JList` del catálogo, `JSpinner`, `JTable` y `JProgressBar` | 3.5 |
 
-**Carga:** I1 ≈ 8.5 h · I2 ≈ 8 h · I3 ≈ 10 h
+**Demo del viernes 27/11:** flujo completo en la GUI: login, registrar miembro, contratar plan (S/ 335.16), registrar entrenador, asignarlo y crear una rutina ordenada por día.
 
-**Demo del jueves 26/11:** flujo completo en la GUI: login, registrar miembro, contratar plan, registrar entrenador, asignarlo y crear una rutina de 5 ejercicios.
+### Sprint 4 — sáb 28/11 al dom 06/12/2026 · 38 puntos · `v1.0`
 
-### Sprint 4 — vie 27/11 al jue 03/12/2026 · 19 puntos · `v0.4`
+Sprint final: une los antiguos Sprints 4 y 5 y lo hacen **2 integrantes** (I1 dejó el proyecto). Dura 9 días y termina el domingo 06/12, un día antes de la presentación.
 
-> **Objetivo:** "Que los datos no se pierdan al cerrar el programa y que el administrador tenga reportes y gráficos de ingresos."
+> **Objetivo:** "Que los datos no se pierdan (archivos y base de datos), que el administrador tenga reportes y gráficos de ingresos, y presentar el producto pulido el lunes 07/12."
 
-**Historias:** HU-09 (3), HU-10 (8), HU-11 (3), HU-13 (5)
+**Historias** (en orden de prioridad): HU-13 (5), HU-10 (8), HU-11 (3), HU-14 (8), HU-09 (3), HT-05 (2), HT-06 (3), HT-07 (3), HU-15 (3)
 
 | Historia | Resp. | Tarea | Horas |
 |---|---|---|---|
-| HU-09 | I3 | Pestaña interna "Historial" en `PanelRutinas` | 2 |
-| HU-10 | I1 | `ServicioReportes`: ingresos por periodo, mensuales y matriz 12×3 | 3 |
-| HU-10 | I2 | `GraficoBarras` con `paintComponent` | 2.5 |
-| HU-10 | I2 | `PanelReportes` con `JSpinner` de fechas, `JTable` y exportar `.txt` | 2.5 |
-| HU-11 | I1 | `planesMasSolicitados()` con `HashMap` y ranking | 1.5 |
-| HU-11 | I2 | `PanelDashboard`: tarjetas e integración de gráficos | 1.5 |
 | HU-13 | I3 | `ArchivoTexto`: exportar e importar CSV | 2 |
 | HU-13 | I3 | `PersistenciaObjetos` (`.dat`) y `ArchivoBinario` (`pagos.bin`) | 2.5 |
-| HU-13 | I1 | Menú Archivo y `WindowListener` para guardar al salir | 1 |
-| Extra | I3 | Preparar el script SQL (adelanto de HU-14) | 1 |
-| — | Todos | Eventos Scrum | 2 c/u |
-
-**Carga:** I1 ≈ 8.5 h · I2 ≈ 8.5 h · I3 ≈ 9.5 h
-
-**Demo del jueves 03/12:** cerrar y volver a abrir el programa sin perder los datos; dashboard con miembros activos, por vencer e ingresos del mes; reporte de ingresos de noviembre exportado a `.txt`; importar un CSV con una línea con errores (se informa y continúa).
-
-### Sprint 5 — vie 04/12 al jue 10/12/2026 · 19 puntos · `v1.0`
-
-> **Objetivo:** "Guardar la información en una base de datos, dejar el producto pulido y presentarlo con éxito el jueves 10/12."
-
-**Historias:** HU-14 (8), HU-15 (3), HT-05 (2), HT-06 (3), HT-07 (3)
-
-| Historia | Resp. | Tarea | Horas |
-|---|---|---|---|
+| HU-13 | I2 (era de I1) | Menú Archivo y `WindowListener` para guardar al salir | 1 |
+| HU-10 | I2 (era de I1) | `ServicioReportes`: ingresos por periodo, mensuales y matriz 12×3 | 3 |
+| HU-10 | I2 | `GraficoBarras` con `paintComponent` | 2.5 |
+| HU-10 | I2 | `PanelReportes` con `JSpinner` de fechas, `JTable` y exportar `.txt` | 2.5 |
+| HU-11 | I2 (era de I1) | `planesMasSolicitados()` con `HashMap` y ranking | 1.5 |
+| HU-11 | I2 | `PanelDashboard`: tarjetas e integración de gráficos | 1.5 |
+| HU-14 | I3 | Script SQL (`sql/gympro.sql`) | 1 |
 | HU-14 | I3 | `ConexionBD` (Singleton) y DAOs de Miembro, Plan, Membresia y Pago | 4 |
 | HU-14 | I3 | DAOs de Entrenador, Rutina y Ejercicio | 2 |
-| HU-14 | I1 | `PersistenciaBD` con transacción en contratar membresía | 2 |
+| HU-14 | I3 (era de I1) | `PersistenciaBD` con transacción en contratar membresía | 2 |
 | HU-14 | I2 | Menú "Base de datos" y modo sin conexión | 1 |
-| HU-15 | I1 | Comprobante y rutina en `.txt` | 1.5 |
-| HT-05 | I1 | Clase de datos de prueba y carga inicial | 1.5 |
+| HU-09 | I3 | Pestaña interna "Historial" en `PanelRutinas` | 2 |
+| HT-05 | I3 (era de I1) | Clase de datos de prueba y carga inicial | 1.5 |
 | HT-06 | I3 | README e instrucciones de la BD | 1 |
+| HT-06 | I3 (era de I1) | Actualizar especificación y UML final | 1.5 |
 | HT-06 | I2 | Manual de usuario con capturas | 1.5 |
-| HT-06 | I1 | Actualizar especificación y UML final | 1.5 |
 | HT-07 | I2 | Diapositivas y guion | 2 |
-| HT-07 | Todos | Grabar el video de respaldo | 1 |
-| HT-07 | Todos | Ensayo general el miércoles 09/12 | 1 |
+| HT-07 | Ambos | Grabar el video de respaldo | 1 c/u |
+| HT-07 | Ambos | Ensayo general el domingo 06/12 | 1 c/u |
+| HU-15 | I2 (era de I1) | Comprobante y rutina en `.txt` | 1.5 |
+| — | Ambos | Planning, dailies, review y retrospectiva | 3 c/u |
 
-**Carga:** I1 ≈ 10 h · I2 ≈ 8.5 h · I3 ≈ 9 h
+**Carga:** I2 ≈ 23 h · I3 ≈ 24.5 h (capacidad efectiva: 20 h cada uno). La carga supera la capacidad, por eso hay una **línea de corte**: si en la revisión del martes 01/12 el sprint va atrasado, se recorta primero HU-15 (3 pts) y luego HU-09 (3 pts), y el compromiso mínimo queda en 32 puntos. El PO (I3) acepta el alcance reducido y se anota en el acta.
 
-**Fechas internas del Sprint 5**
+**Fechas internas del Sprint 4**
 
 | Fecha | Actividad |
 |---|---|
-| vie 04/12 | Planning |
-| lun 07/12 | HU-14 integrada en `develop` |
-| mar 08/12 | **Code freeze**: desde aquí sólo se corrigen errores |
-| mié 09/12 | Ensayo general, video de respaldo, tag `v1.0` en `main` |
-| jue 10/12 | Presentación (funciona como la Sprint Review final) y retrospectiva final del proyecto |
+| sáb 28/11 | Planning (60 min). Integrar `develop2` en `develop` con revisión de I3 y borrar `develop2` |
+| lun 30/11 | Daily. PR de archivos (HU-13) y de `ServicioReportes` abiertos |
+| mar 01/12 | **Revisión de mitad de sprint:** cada uno tiene al menos un PR por tarea en curso; si no, se aplica la línea de corte |
+| jue 03/12 | HU-10, HU-11 y HU-13 fusionadas en `develop` (reportes y archivos funcionando) |
+| vie 04/12 | HU-14 integrada en `develop`; datos de prueba (HT-05) |
+| sáb 05/12 | **Code freeze**: desde aquí solo se corrigen errores. Documentación (HT-06) |
+| dom 06/12 | Ensayo general, video de respaldo, `develop` → `main` y tag `v1.0`. Sprint Review y retrospectiva final |
+| **lun 07/12** | **Presentación final** del proyecto |
 
 > **Plan B si la BD se complica:** HU-14 se entrega con `Miembro` y `Pago` en la BD y el resto se guarda en el archivo `.dat`. Se explica en la presentación como decisión del equipo (el PO acepta el alcance reducido).
+
+**Demo del domingo 06/12 (review):** cerrar y volver a abrir el programa sin perder los datos; dashboard con miembros activos, por vencer e ingresos del mes; reporte de ingresos de noviembre exportado a `.txt`; importar un CSV con una línea con errores (se informa y continúa); datos guardados en la base de datos.
 
 ---
 
@@ -629,10 +624,10 @@ HT-03: implementa búsqueda binaria por DNI
 fix: corrige días restantes negativos en Membresia
 ```
 
-### 11.4 Fin de sprint (jueves, antes de la review)
+### 11.4 Fin de sprint (último día, antes de la review)
 
 - Fusionar `develop` en `main`.
-- Crear el tag: `v0.1` (S1), `v0.2` (S2), `v0.3` (S3), `v0.4` (S4), `v1.0` (S5).
+- Crear el tag: `v0.1` (S1), `v0.2` (S2), `v0.3` (S3), `v1.0` (S4).
 - Todos descargan `main` y comprueban que compila en su computadora.
 
 ### 11.5 Acuerdos para evitar conflictos
@@ -679,8 +674,7 @@ Para agregar la línea real, añadir debajo de la línea ideal otra fila `line [
 | S1 | 18 | | | |
 | S2 | 19 | 19 | 19 | PO ausente en la review; aceptación por SM y QA ([acta](actas/Sprint2_Review.md)) |
 | S3 | 19 | 19 | 19 | Aceptación provisional del SM (PO y QA ausentes); tareas de I1 e I3 redistribuidas a I2 por el plan B ([acta](actas/Sprint3_Review.md)) |
-| S4 | 19 | | | |
-| S5 | 19 | | | |
+| S4 | 38 | | | Antiguos S4 y S5 unidos; 2 integrantes; línea de corte en 32 |
 
 Velocidad promedio = suma de "Aceptado" / número de sprints.
 
@@ -704,10 +698,11 @@ Probabilidad e impacto: **A** = alto, **M** = medio, **B** = bajo.
 | R2 | Un integrante se enferma o abandona | **Ocurrió** | A | I1 dejó el proyecto el 27/11. Sus tareas se repartieron entre I2 e I3 (sección 3). Con 2 personas, cada uno revisa el código del otro para que ambos lo conozcan. |
 | R3 | Temas aún no vistos en clase (GUI avanzada, JDBC) | M | M | Tarea de investigación (spike) de 1-2 h; usar el libro del curso (Aedo, Dean, Deitel). |
 | R4 | Conflictos de Git que rompen el código | M | M | Ramas por historia, PRs pequeños, pull frecuente; nunca trabajar directo en `main`. |
-| R5 | La BD no funciona en la computadora de la presentación | M | A | Usar SQLite (no necesita servidor) o el plan B de archivos `.dat`; probar en esa computadora el 09/12. |
+| R5 | La BD no funciona en la computadora de la presentación | M | A | Usar SQLite (no necesita servidor) o el plan B de archivos `.dat`; probar en esa computadora el domingo 06/12. |
 | R6 | Alcance demasiado grande | M | A | El PO prioriza; las historias de baja prioridad (HU-15) se recortan primero. |
 | R7 | Integración tardía de la GUI con la lógica | M | M | Integrar todos los jueves, no sólo al final del proyecto. |
 | R8 | Pérdida de código | B | A | Todo está en GitHub; push diario. |
+| R9 | Sprint final de 38 puntos con 2 personas | A | A | Historias en orden de prioridad y línea de corte (HU-15, luego HU-09); revisión de mitad el martes 01/12; code freeze el sábado 05/12. |
 
 El SM revisa esta tabla en cada retrospectiva y la actualiza.
 
@@ -781,18 +776,18 @@ Mejora elegida para el próximo sprint (una sola, medible):
 
 ---
 
-## 16. Preparación de la presentación final (jueves 10/12)
+## 16. Preparación de la presentación final (lunes 07/12)
 
 ### 16.1 Estructura sugerida (15-20 minutos)
 
 | Minutos | Contenido | Presenta |
 |---|---|---|
-| 0-2 | Problema y objetivo del sistema GymPro | I1 (PO) |
+| 0-2 | Problema y objetivo del sistema GymPro | I3 (PO) |
 | 2-5 | Diseño OO: diagrama UML, herencia, polimorfismo, composición y agregación | I3 |
-| 5-12 | Demostración en vivo (guion 16.2) | I2 maneja, I1 narra |
+| 5-12 | Demostración en vivo (guion 16.2) | I2 maneja, I3 narra |
 | 12-14 | Archivos y base de datos (cómo se guarda todo) | I3 |
-| 14-16 | Scrum: sprints, burndown, velocidad, lecciones aprendidas | I2 (SM) |
-| 16-20 | Preguntas del jurado | Todos |
+| 14-16 | Scrum: sprints, burndown, velocidad, cambio de equipo y lecciones aprendidas | I2 (SM) |
+| 16-20 | Preguntas del jurado | Ambos |
 
 ### 16.2 Guion de la demostración
 
@@ -842,7 +837,7 @@ A diferencia del modelo en cascada, estas etapas se repiten **en cada sprint** s
 ### 17.3 Evidencias para la evaluación (guardar en `docs/` del repositorio)
 
 - [ ] Este plan y el Product Backlog final.
-- [ ] Actas de planning, review y retro de los 5 sprints.
+- [ ] Actas de planning, review y retro de los 4 sprints.
 - [ ] Capturas del tablero al inicio y al final de cada sprint.
 - [ ] Burndown de cada sprint y registro de velocidad.
 - [ ] Historial de commits y Pull Requests en GitHub.
