@@ -1,6 +1,7 @@
 package gympro;
 
 import gympro.excepciones.DatosInvalidosException;
+import gympro.excepciones.EntrenadorSinCupoException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.DiaSemana;
@@ -87,6 +88,7 @@ public class PruebasLogicaNegocio {
         pruebaUsuarios();
         pruebaActualizarYDarDeBaja();
         pruebaEntrenadores();
+        pruebaAsignarEntrenador();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
@@ -157,6 +159,55 @@ public class PruebasLogicaNegocio {
                 d[DiaSemana.LUNES.ordinal()][Turno.MANANA.ordinal()] && d[DiaSemana.VIERNES.ordinal()][Turno.NOCHE.ordinal()]
                 && !d[DiaSemana.MARTES.ordinal()][Turno.TARDE.ordinal()] && d.length == 7 && d[0].length == 3);
         verificarMonto("Sueldo sin miembros", carlos.calcularSueldo(), 1500.00);
+    }
+
+    // HU-07 · T1: asignar entrenador (CP-10 y HU-07-a a HU-07-d)
+    private static void pruebaAsignarEntrenador() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Entrenador e1 = new Entrenador("41000001", "Pedro", "Salas", null, null, null, 1000);
+        Entrenador e2 = new Entrenador("41000002", "Lucía", "Vera", null, null, null, 1200);
+        g.registrarEntrenador(e1);
+        g.registrarEntrenador(e2);
+
+        // 16 miembros con membresía activa
+        for (int i = 1; i <= 16; i++) {
+            String dni = String.format("7100%04d", i);
+            g.registrarMiembro(new MiembroRegular(dni, "Miembro" + i, "Prueba", null, null, null));
+            g.contratarMembresia(dni, "PM", MetodoPago.EFECTIVO);
+        }
+        for (int i = 1; i <= 15; i++) {
+            g.asignarEntrenador(String.format("7100%04d", i), e1.getCodigo());
+        }
+        verificar("15 miembros asignados a E1", e1.getMiembrosAsignados().size() == 15 && !e1.tieneCupo());
+
+        g.asignarEntrenador("71000016", e2.getCodigo());
+        esperarExcepcion("CP-10 miembro n.° 16 a un entrenador lleno", EntrenadorSinCupoException.class,
+                () -> g.asignarEntrenador("71000016", e1.getCodigo()));
+        verificar("CP-10 el miembro conserva su entrenador anterior",
+                g.buscarMiembro("71000016").getEntrenador() == e2 && e2.getMiembrosAsignados().size() == 1
+                && e1.getMiembrosAsignados().size() == 15);
+
+        esperarExcepcion("HU-07-a miembro sin membresía activa", DatosInvalidosException.class,
+                () -> g.asignarEntrenador("70000001", e2.getCodigo()));
+
+        g.asignarEntrenador("71000001", e2.getCodigo());
+        Miembro m1 = g.buscarMiembro("71000001");
+        verificar("HU-07-b reasignar de E1 a E2", e1.getMiembrosAsignados().size() == 14
+                && e2.getMiembrosAsignados().size() == 2 && m1.getEntrenador() == e2 && !e1.getMiembrosAsignados().contains(m1));
+        g.asignarEntrenador("71000001", e2.getCodigo());
+        verificar("Asignar dos veces al mismo no duplica", e2.getMiembrosAsignados().size() == 2);
+
+        esperarExcepcion("HU-07-c código de entrenador inexistente", DatosInvalidosException.class,
+                () -> g.asignarEntrenador("71000002", "E999"));
+
+        Entrenador e3 = new Entrenador("41000003", "Rosa", "Mamani", null, null, null, 1500);
+        g.registrarEntrenador(e3);
+        for (int i = 2; i <= 4; i++) {
+            g.asignarEntrenador(String.format("7100%04d", i), e3.getCodigo());
+        }
+        verificarMonto("HU-07-d sueldo con 3 miembros", e3.calcularSueldo(), 1560.00);
+        verificar("Ranking: E1 (12 miembros) va primero",
+                g.rankingEntrenadores().get(0) == e1);
     }
 
     // HU-12 y CP-18
