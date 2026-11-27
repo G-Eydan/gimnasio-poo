@@ -166,9 +166,10 @@ gimnasio-poo/
 
 | Integrante | Rol Scrum | Área técnica |
 |---|---|---|
-| Luis Alberto Vera Salcedo — I1 | Product Owner | Lógica de negocio |
-| David Rodrigo Jove Choquecota — I2 (líder) | Scrum Master | Interfaz gráfica e integración |
-| Eydan Fabricio Mayna Mollapaza — I3 | Desarrollador | Modelo, persistencia y pruebas (QA) |
+| David Rodrigo Jove Choquecota — I2 (líder) | Scrum Master | Interfaz gráfica, lógica de negocio e integración |
+| Eydan Fabricio Mayna Mollapaza — I3 | Product Owner | Modelo, persistencia y datos de prueba |
+
+Desde el Sprint 4 el equipo tiene 2 integrantes; el detalle del cambio está en el [Plan Scrum](docs/Plan_Scrum_GymPro.md#3-equipo-y-roles).
 
 ## Documentación
 

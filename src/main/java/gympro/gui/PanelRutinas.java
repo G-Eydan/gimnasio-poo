@@ -48,8 +48,8 @@ import java.util.Locale;
  *       {@link JTable} con la rutina y {@link JProgressBar} de 0 a {@link Rutina#MAX_EJERCICIOS}.</li>
  * </ul>
  *
- * <p>«Exportar .txt» queda desactivado (HU-15, Sprint 5) y el historial detallado es HU-09
- * (Sprint 4).</p>
+ * <p>«Exportar .txt» (HU-15) y el historial detallado (HU-09) quedan para el
+ * Sprint 4.</p>
  *
  * @author I3
  */
@@ -251,7 +251,7 @@ public final class PanelRutinas extends JPanel implements Actualizable
         btnOrdenar.addActionListener(e -> ordenarPorDia());
         JButton btnExportar = new JButton("Exportar .txt");
         btnExportar.setEnabled(false);
-        btnExportar.setToolTipText("Disponible en el Sprint 5 (HU-15)");
+        btnExportar.setToolTipText("Disponible en el Sprint 4 (HU-15)");
 
         JPanel datos = new JPanel(new GridLayout(0, 2, 6, 4));
         datos.add(new JLabel("Día:"));
