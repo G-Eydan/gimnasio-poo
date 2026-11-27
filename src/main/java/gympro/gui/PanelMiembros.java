@@ -1,5 +1,6 @@
 package gympro.gui;
 
+import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.EstadoInscripcion;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.persona.Miembro;
@@ -186,9 +187,8 @@ public final class PanelMiembros extends JPanel implements Actualizable
         btnNuevo.addActionListener(e -> nuevo());
         btnEditar.addActionListener(e -> editar());
         btnFicha.addActionListener(e -> verFicha());
-        // Dar de baja necesita Gimnasio.darDeBajaMiembro y Miembro.isActivo (HG-01 · T1, #31).
-        // Mientras no estén fusionados, el botón queda desactivado y lo explica.
-        btnBaja.setToolTipText("Disponible cuando se fusione HG-01 · T1 (#31): baja lógica del miembro");
+        btnBaja.addActionListener(e -> darDeBaja());
+        btnBaja.setToolTipText("Baja lógica: el miembro no se borra, queda inactivo con su historial");
 
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         panel.add(btnNuevo);
@@ -268,10 +268,10 @@ public final class PanelMiembros extends JPanel implements Actualizable
 
     private void actualizarBotones()
     {
-        boolean haySeleccion = seleccionado() != null;
-        btnEditar.setEnabled(haySeleccion);
-        btnFicha.setEnabled(haySeleccion);
-        btnBaja.setEnabled(false);
+        Miembro m = seleccionado();
+        btnEditar.setEnabled(m != null);
+        btnFicha.setEnabled(m != null);
+        btnBaja.setEnabled(m != null && m.isActivo());
     }
 
     // ------------------------------------------------------------------
@@ -304,6 +304,33 @@ public final class PanelMiembros extends JPanel implements Actualizable
             return;
         }
         new DialogoMiembro(SwingUtilities.getWindowAncestor(this), gimnasio, m).setVisible(true);
+        actualizar();
+    }
+
+    /** Pide confirmación y hace la baja lógica del miembro seleccionado (decisión D6). */
+    private void darDeBaja()
+    {
+        Miembro m = seleccionado();
+        if (m == null || !m.isActivo())
+        {
+            return;
+        }
+        int opcion = JOptionPane.showConfirmDialog(this,
+                "¿Dar de baja a " + m.getNombreCompleto() + " (DNI " + m.getDni() + ")?\n"
+                        + "No se borra: conserva su historial, pero ya no podrá contratar ni renovar.",
+                "Dar de baja", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (opcion != JOptionPane.YES_OPTION)
+        {
+            return;
+        }
+        try
+        {
+            gimnasio.darDeBajaMiembro(m.getDni());
+        }
+        catch (MiembroNoEncontradoException e)
+        {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Dar de baja", JOptionPane.ERROR_MESSAGE);
+        }
         actualizar();
     }
 
