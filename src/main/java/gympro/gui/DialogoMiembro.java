@@ -301,8 +301,7 @@ public final class DialogoMiembro extends JDialog
 
     /**
      * Aplica los cambios con los setters de {@code Persona} y de la subclase (todos los
-     * datos ya se validaron). Cuando se fusione HG-01 · T1 (#31), aquí se llamará además
-     * a {@code gimnasio.actualizarMiembro(miembro)}.
+     * datos ya se validaron) y los confirma con {@code gimnasio.actualizarMiembro}.
      */
     private void editar(String nombres, String apellidos, LocalDate fechaNacimiento, String telefono, String email,
                         String extra1, String extra2) throws DatosInvalidosException
@@ -321,6 +320,14 @@ public final class DialogoMiembro extends JDialog
         {
             ((MiembroCorporativo) miembro).setEmpresa(extra1);
             ((MiembroCorporativo) miembro).setRuc(extra2);
+        }
+        try
+        {
+            gimnasio.actualizarMiembro(miembro);
+        }
+        catch (MiembroNoEncontradoException e)
+        {
+            throw new DatosInvalidosException(e.getMessage());
         }
     }
 
