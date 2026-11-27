@@ -15,6 +15,8 @@ import gympro.modelo.enums.MetodoPago;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
 import gympro.modelo.membresia.Plan;
+import gympro.modelo.enums.Especialidad;
+import gympro.modelo.persona.Entrenador;
 import gympro.modelo.persona.Miembro;
 import gympro.modelo.persona.Usuario;
 import gympro.util.Ordenamiento;
@@ -46,6 +48,8 @@ public class Gimnasio implements Serializable {
     private final ArrayList<Membresia> membresias = new ArrayList<>();
     private final ArrayList<Pago> pagos = new ArrayList<>();
     private final ArrayList<Usuario> usuarios = new ArrayList<>();
+    /** Clave: código del entrenador (E001, E002…). */
+    private final HashMap<String, Entrenador> entrenadores = new HashMap<>();
 
     // Contadores de códigos (de instancia, para que se guarden con el respaldo .dat)
     private int contadorMembresias = 0;
@@ -160,6 +164,60 @@ public class Gimnasio implements Serializable {
      */
     public void darDeBajaMiembro(String dni) throws MiembroNoEncontradoException {
         buscarMiembro(dni).setActivo(false);
+    }
+
+    // ==================================================================
+    // Entrenadores (HU-06)
+    // ==================================================================
+
+    /**
+     * Registra un entrenador nuevo.
+     *
+     * @throws DatosInvalidosException si es nulo o ya hay un entrenador con el mismo DNI
+     */
+    public void registrarEntrenador(Entrenador e) throws DatosInvalidosException {
+        if (e == null) {
+            throw new DatosInvalidosException("El entrenador no puede ser nulo.");
+        }
+        for (Entrenador otro : entrenadores.values()) {
+            if (otro.getDni().equals(e.getDni())) {
+                throw new DatosInvalidosException("Ya existe un entrenador con DNI " + e.getDni() + ".");
+            }
+        }
+        entrenadores.put(e.getCodigo(), e);
+    }
+
+    /** @return el entrenador con ese código, o {@code null} si no existe */
+    public Entrenador buscarEntrenador(String codigo) {
+        return (codigo == null) ? null : entrenadores.get(codigo);
+    }
+
+    /** Todos los entrenadores, ordenados por apellidos y luego nombres. */
+    public ArrayList<Entrenador> listarEntrenadores() {
+        ArrayList<Entrenador> lista = new ArrayList<>(entrenadores.values());
+        lista.sort((a, b) -> {
+            int r = a.getApellidos().compareToIgnoreCase(b.getApellidos());
+            return (r != 0) ? r : a.getNombres().compareToIgnoreCase(b.getNombres());
+        });
+        return lista;
+    }
+
+    /** Entrenadores que tienen la especialidad indicada (ordenados como {@link #listarEntrenadores()}). */
+    public ArrayList<Entrenador> buscarEntrenadoresPorEspecialidad(Especialidad especialidad) {
+        ArrayList<Entrenador> lista = new ArrayList<>();
+        for (Entrenador e : listarEntrenadores()) {
+            if (e.tieneEspecialidad(especialidad)) {
+                lista.add(e);
+            }
+        }
+        return lista;
+    }
+
+    /** Entrenadores de más a menos miembros asignados (RF-27), con el orden natural de {@link Entrenador}. */
+    public ArrayList<Entrenador> rankingEntrenadores() {
+        ArrayList<Entrenador> lista = new ArrayList<>(entrenadores.values());
+        lista.sort(Collections.reverseOrder());
+        return lista;
     }
 
     // ==================================================================
