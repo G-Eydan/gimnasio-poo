@@ -2,11 +2,17 @@ package gympro;
 
 import gympro.excepciones.DatosInvalidosException;
 import gympro.excepciones.EntrenadorSinCupoException;
+import gympro.excepciones.RutinaLlenaException;
+import gympro.modelo.entrenamiento.DetalleRutina;
+import gympro.modelo.entrenamiento.Ejercicio;
+import gympro.modelo.entrenamiento.Rutina;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
 import gympro.modelo.enums.DiaSemana;
 import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.EstadoMembresia;
+import gympro.modelo.enums.GrupoMuscular;
+import gympro.modelo.enums.Objetivo;
 import gympro.modelo.enums.Turno;
 import gympro.modelo.persona.Entrenador;
 import gympro.modelo.enums.MetodoPago;
@@ -89,6 +95,7 @@ public class PruebasLogicaNegocio {
         pruebaActualizarYDarDeBaja();
         pruebaEntrenadores();
         pruebaAsignarEntrenador();
+        pruebaRutinas();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
@@ -208,6 +215,75 @@ public class PruebasLogicaNegocio {
         verificarMonto("HU-07-d sueldo con 3 miembros", e3.calcularSueldo(), 1560.00);
         verificar("Ranking: E1 (12 miembros) va primero",
                 g.rankingEntrenadores().get(0) == e1);
+    }
+
+    // HU-08 · T3: rutinas (CP-11, CP-12, CP-13 y HU-08-a a HU-08-d)
+    private static void pruebaRutinas() throws Exception {
+        Ejercicio press = new Ejercicio("Press de banca", GrupoMuscular.PECHO);
+        Ejercicio sentadilla = new Ejercicio("Sentadilla", GrupoMuscular.PIERNAS);
+
+        // CP-11: el ejercicio n.° 21 no entra
+        Rutina llena = new Rutina("R9001", "Llena", Objetivo.FUERZA, null, null);
+        for (int i = 0; i < Rutina.MAX_EJERCICIOS; i++) {
+            llena.agregarEjercicio(press, DiaSemana.LUNES, 3, 10);
+        }
+        esperarExcepcion("CP-11 agregar el ejercicio n.° 21", RutinaLlenaException.class,
+                () -> llena.agregarEjercicio(sentadilla, DiaSemana.MARTES, 3, 10));
+        verificar("CP-11 siguen 20 ejercicios", llena.getNumDetalles() == 20 && llena.estaLlena());
+
+        // CP-12: eliminar la posición 2 de 5
+        Rutina cinco = new Rutina("R9002", "Cinco", Objetivo.HIPERTROFIA, null, null);
+        String[] nombres = {"A", "B", "C", "D", "E"};
+        for (String n : nombres) {
+            cinco.agregarEjercicio(new Ejercicio(n, GrupoMuscular.BRAZOS), DiaSemana.LUNES, 3, 10);
+        }
+        verificar("CP-12 eliminar posición 2", cinco.eliminarDetalle(2));
+        DetalleRutina[] quedan = cinco.getDetalles();
+        verificar("CP-12 quedan 4 en orden (A, B, D, E)", quedan.length == 4 && cinco.getNumDetalles() == 4
+                && quedan[0].getEjercicio().getNombre().equals("A") && quedan[1].getEjercicio().getNombre().equals("B")
+                && quedan[2].getEjercicio().getNombre().equals("D") && quedan[3].getEjercicio().getNombre().equals("E"));
+        verificar("Eliminar fuera de rango -> false", !cinco.eliminarDetalle(4) && !cinco.eliminarDetalle(-1));
+
+        // HU-08-a: validaciones RN-09
+        Rutina r = new Rutina("R9003", "Validar", Objetivo.FUERZA, null, null);
+        esperarExcepcion("HU-08-a series 0", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 0, 10));
+        esperarExcepcion("HU-08-a series 11", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 11, 10));
+        esperarExcepcion("HU-08-a repeticiones 51", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 3, 51));
+        esperarExcepcion("HU-08-a peso -5", DatosInvalidosException.class, () -> r.agregarEjercicio(press, DiaSemana.LUNES, 3, 10, -5, 60));
+        esperarExcepcion("Rutina sin nombre", DatosInvalidosException.class, () -> new Rutina("R9", " ", Objetivo.FUERZA, null, null));
+        verificar("Los rechazados no se agregan", r.getNumDetalles() == 0);
+
+        // HU-08-b y HU-08-d: encadenar y ordenar por día
+        r.agregarEjercicio(press, DiaSemana.VIERNES, 3, 10)
+         .agregarEjercicio(sentadilla, DiaSemana.LUNES, 4, 8, 60, 90)
+         .agregarEjercicio(new Ejercicio("Plancha", GrupoMuscular.ABDOMEN), DiaSemana.MIERCOLES, 3, 1);
+        verificar("HU-08-d encadenar 3 agregarEjercicio", r.getNumDetalles() == 3);
+        r.ordenarPorDia();
+        DetalleRutina[] ordenados = r.getDetalles();
+        verificar("HU-08-b ordenar -> lunes, miércoles, viernes", ordenados[0].getDia() == DiaSemana.LUNES
+                && ordenados[1].getDia() == DiaSemana.MIERCOLES && ordenados[2].getDia() == DiaSemana.VIERNES);
+        verificar("buscarEjercicio sin distinguir mayúsculas", r.buscarEjercicio("SENTADILLA") == 0 && r.buscarEjercicio("Remo") == -1);
+
+        // Catálogo y crearRutina (CP-13 y HU-08-c)
+        Gimnasio g = nuevoGimnasio();
+        verificar("Catálogo inicial con 15 ejercicios", g.getCatalogoEjercicios().size() == 15);
+        verificar("Catálogo filtrado por PIERNAS", !g.getCatalogoEjercicios(GrupoMuscular.PIERNAS).isEmpty()
+                && g.getCatalogoEjercicios(GrupoMuscular.PIERNAS).stream().allMatch(e -> e.getGrupoMuscular() == GrupoMuscular.PIERNAS));
+        esperarExcepcion("Ejercicio repetido en el catálogo", DatosInvalidosException.class,
+                () -> g.agregarEjercicioCatalogo(new Ejercicio("sentadilla", GrupoMuscular.PIERNAS)));
+        g.agregarEjercicioCatalogo(new Ejercicio("Burpees", GrupoMuscular.CUERPO_COMPLETO));
+        verificar("agregarEjercicioCatalogo", g.getCatalogoEjercicios().size() == 16);
+
+        esperarExcepcion("HU-08-c rutina a un miembro sin membresía activa", DatosInvalidosException.class,
+                () -> g.crearRutina("70000001", "Inicio", Objetivo.FUERZA));
+        g.contratarMembresia("70000001", "PM", MetodoPago.EFECTIVO);
+        Rutina primera = g.crearRutina("70000001", "Inicio", Objetivo.FUERZA);
+        Rutina segunda = g.crearRutina("70000001", "Fase 2", Objetivo.HIPERTROFIA);
+        Miembro luis = g.buscarMiembro("70000001");
+        verificar("CP-13 la primera queda archivada en el historial", !primera.isActiva()
+                && luis.getHistorialRutinas().size() == 2 && luis.getHistorialRutinas().get(0) == primera);
+        verificar("CP-13 getRutinaActual es la nueva", luis.getRutinaActual() == segunda && segunda.isActiva());
+        verificar("Códigos de rutina distintos", !primera.getCodigo().equals(segunda.getCodigo()));
     }
 
     // HU-12 y CP-18
