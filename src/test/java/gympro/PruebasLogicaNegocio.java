@@ -3,7 +3,11 @@ package gympro;
 import gympro.excepciones.DatosInvalidosException;
 import gympro.excepciones.MembresiaActivaException;
 import gympro.excepciones.MiembroNoEncontradoException;
+import gympro.modelo.enums.DiaSemana;
+import gympro.modelo.enums.Especialidad;
 import gympro.modelo.enums.EstadoMembresia;
+import gympro.modelo.enums.Turno;
+import gympro.modelo.persona.Entrenador;
 import gympro.modelo.enums.MetodoPago;
 import gympro.modelo.membresia.Membresia;
 import gympro.modelo.membresia.Pago;
@@ -82,6 +86,7 @@ public class PruebasLogicaNegocio {
         pruebaComprobante();
         pruebaUsuarios();
         pruebaActualizarYDarDeBaja();
+        pruebaEntrenadores();
 
         System.out.println();
         System.out.println("Resultado: " + correctas + " correctas, " + fallidas + " con fallo.");
@@ -117,6 +122,41 @@ public class PruebasLogicaNegocio {
                 () -> g.contratarMembresia("70000002", "PT", MetodoPago.EFECTIVO, LocalDate.now().plusMonths(3)));
         esperarExcepcion("Renovar a un dado de baja", DatosInvalidosException.class,
                 () -> g.renovarMembresia("70000002", "PT", MetodoPago.EFECTIVO));
+    }
+
+    // HU-06 · T1: registrar y buscar entrenadores
+    private static void pruebaEntrenadores() throws Exception {
+        Gimnasio g = nuevoGimnasio();
+        Entrenador carlos = new Entrenador("40000001", "Carlos", "Ramos", null, "911111111", "carlos@gympro.pe", 1500, Turno.MANANA)
+                .agregarEspecialidad(Especialidad.MUSCULACION).agregarEspecialidad(Especialidad.FUNCIONAL);
+        Entrenador maria = new Entrenador("40000002", "María", "Apaza", null, "922222222", "maria@gympro.pe", 1400, Turno.TARDE)
+                .agregarEspecialidad(Especialidad.YOGA);
+        g.registrarEntrenador(carlos);
+        g.registrarEntrenador(maria);
+
+        verificar("Código generado E###", carlos.getCodigo().matches("E\\d{3}"));
+        verificar("Códigos distintos", !carlos.getCodigo().equals(maria.getCodigo()));
+        verificar("buscarEntrenador por código", g.buscarEntrenador(maria.getCodigo()) == maria);
+        verificar("buscarEntrenador inexistente -> null", g.buscarEntrenador("E999") == null);
+        verificar("listarEntrenadores ordena por apellido (Apaza, Ramos)",
+                g.listarEntrenadores().get(0) == maria && g.listarEntrenadores().get(1) == carlos);
+        esperarExcepcion("Entrenador con DNI repetido", DatosInvalidosException.class,
+                () -> g.registrarEntrenador(new Entrenador("40000001", "Otro", "Igual", null, null, null, 1000)));
+        esperarExcepcion("registrarEntrenador(null)", DatosInvalidosException.class, () -> g.registrarEntrenador(null));
+        esperarExcepcion("Sueldo base negativo", DatosInvalidosException.class,
+                () -> new Entrenador("40000009", "A", "B", null, null, null, -1));
+
+        verificar("Por especialidad MUSCULACION -> solo Carlos",
+                g.buscarEntrenadoresPorEspecialidad(Especialidad.MUSCULACION).equals(java.util.List.of(carlos)));
+        verificar("Por especialidad CARDIO -> ninguno", g.buscarEntrenadoresPorEspecialidad(Especialidad.CARDIO).isEmpty());
+
+        carlos.setDisponible(DiaSemana.LUNES, Turno.MANANA, true);
+        carlos.setDisponible(DiaSemana.VIERNES, Turno.NOCHE, true);
+        boolean[][] d = carlos.getDisponibilidad();
+        verificar("Disponibilidad guardada en [día][turno]",
+                d[DiaSemana.LUNES.ordinal()][Turno.MANANA.ordinal()] && d[DiaSemana.VIERNES.ordinal()][Turno.NOCHE.ordinal()]
+                && !d[DiaSemana.MARTES.ordinal()][Turno.TARDE.ordinal()] && d.length == 7 && d[0].length == 3);
+        verificarMonto("Sueldo sin miembros", carlos.calcularSueldo(), 1500.00);
     }
 
     // HU-12 y CP-18
