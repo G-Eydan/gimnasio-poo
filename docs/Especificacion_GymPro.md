@@ -779,15 +779,14 @@ En la GUI todas se capturan y se muestran con `JOptionPane.showMessageDialog` (`
 
 > El plan completo y detallado está en **[Plan_Scrum_GymPro.md](Plan_Scrum_GymPro.md)** (roles, eventos, backlog con criterios de aceptación, tareas por sprint, Git, burndown, riesgos, plantillas y presentación). Aquí va un resumen.
 
-### 14.1 Roles (equipo de 3 integrantes)
+### 14.1 Roles (equipo de 2 integrantes desde el Sprint 4)
 
 | Integrante | Rol Scrum | Área técnica |
 |---|---|---|
-| Integrante 1 | Product Owner | Lógica de negocio: planes, membresías, pagos, `Gimnasio`, reportes |
-| Integrante 2 | Scrum Master | Interfaz gráfica (Swing) e integración |
-| Integrante 3 | Desarrollador | Modelo, persistencia (archivos, JDBC) y pruebas |
+| Integrante 2 | Scrum Master | Interfaz gráfica (Swing), lógica de negocio (planes, membresías, pagos, `Gimnasio`, reportes) e integración |
+| Integrante 3 | Product Owner | Modelo, persistencia (archivos, JDBC) y datos de prueba |
 
-Los tres programan; todo el código pasa por revisión de otro integrante.
+Los dos programan; todo el código pasa por revisión del otro integrante. El Integrante 1 (Product Owner y lógica de negocio) dejó el proyecto al cierre del Sprint 3; su rol y sus tareas se repartieron entre los otros dos (ver el Plan Scrum, sección 3).
 
 ### 14.2 Product Backlog (94 puntos, 22 elementos)
 
@@ -810,39 +809,40 @@ Los tres programan; todo el código pasa por revisión de otro integrante.
 | HU-10 | Como administrador quiero ver ingresos por periodo con gráficos | Media | 8 | S4 |
 | HU-11 | Como administrador quiero conocer los planes más solicitados | Media | 3 | S4 |
 | HU-13 | Como administrador quiero respaldar, importar y exportar datos | Media | 5 | S4 |
-| HU-14 | Como administrador quiero que los datos se guarden en una base de datos | Alta | 8 | S5 |
-| HU-15 | Como miembro quiero recibir mi comprobante y mi rutina en un archivo de texto | Baja | 3 | S5 |
-| HT-05 | Datos de prueba para la demostración | Media | 2 | S5 |
-| HT-06 | Documento final, UML final y manual de usuario | Alta | 3 | S5 |
-| HT-07 | Diapositivas, guion y ensayo de la presentación | Alta | 3 | S5 |
+| HU-14 | Como administrador quiero que los datos se guarden en una base de datos | Alta | 8 | S4 |
+| HU-15 | Como miembro quiero recibir mi comprobante y mi rutina en un archivo de texto | Baja | 3 | S4 |
+| HT-05 | Datos de prueba para la demostración | Media | 2 | S4 |
+| HT-06 | Documento final, UML final y manual de usuario | Alta | 3 | S4 |
+| HT-07 | Diapositivas, guion y ensayo de la presentación | Alta | 3 | S4 |
 
 ### 14.3 Sprints
 
-Cada sprint dura una semana, de **viernes a jueves**; el jueves es el último día del sprint, con Sprint Review y Retrospectiva.
+El proyecto tiene **4 sprints**. Los dos primeros duran una semana, de viernes a jueves; el Sprint 3 fue de lunes a viernes y el Sprint 4 (que une los antiguos Sprints 4 y 5) dura 9 días. El último día de cada sprint tiene Sprint Review y Retrospectiva.
 
 | Sprint | Fechas | Pts | Incremento |
 |---|---|---|---|
 | S1 | vie 06/11 – jue 12/11 | 18 | Modelo de clases, utilidades, excepciones; registrar miembros y planes desde `MenuConsola` |
 | S2 | vie 13/11 – jue 19/11 | 19 | Contratar, pagar, renovar y vencer membresías; login gráfico (Tema 12) |
-| S3 | vie 20/11 – jue 26/11 | 19 | Aplicación gráfica completa: miembros, planes y pagos, entrenadores, rutinas (Tema 13) |
-| S4 | vie 27/11 – jue 03/12 | 19 | Reportes y gráficos; archivos de texto, binarios y de objetos (Tema 14) |
-| S5 | vie 04/12 – jue 10/12 | 19 | Base de datos y JDBC (Tema 15), documentación y presentación final (Temas 16-17) |
+| S3 | lun 23/11 – vie 27/11 | 19 | Aplicación gráfica completa: miembros, planes y pagos, entrenadores, rutinas (Tema 13) |
+| S4 | sáb 28/11 – dom 06/12 | 38 | Reportes y gráficos; archivos de texto, binarios y de objetos (Tema 14); base de datos y JDBC (Tema 15); documentación y preparación de la presentación (Temas 16-17) |
 
-**Fechas clave:** code freeze mar 08/12 · ensayo general mié 09/12 · presentación jue 10/12.
+**Fechas clave:** code freeze sáb 05/12 · ensayo general dom 06/12 · **presentación final lun 07/12/2026**.
 
-| Día | Evento |
+| Día (sprints de una semana) | Evento |
 |---|---|
-| Viernes | Sprint Planning (60 min) |
-| Lunes / Miércoles | Daily síncrona (10 min); los demás días, daily por mensaje |
-| Martes | Refinamiento del backlog (20 min) |
-| Jueves | Integración, Sprint Review (40 min) y Retrospectiva (20 min) |
+| Primer día | Sprint Planning (60 min) |
+| Durante el sprint | Daily síncrona (10 min) dos veces por semana; los demás días, daily por mensaje |
+| Mitad del sprint | Revisión de avance y refinamiento del backlog (20 min) |
+| Último día | Integración, Sprint Review (40 min) y Retrospectiva (20 min) |
+
+El calendario detallado del Sprint 4 está en el Plan Scrum (sección 9).
 
 ### 14.4 Definición de "Terminado" (DoD)
 
 - [ ] El código compila y cumple todos los criterios de aceptación.
 - [ ] Sigue la convención de nombres y tiene Javadoc en lo público.
 - [ ] Los errores se manejan con excepciones y mensajes claros.
-- [ ] Las reglas de negocio se probaron con los casos de la sección 16, verificadas por alguien distinto al autor.
+- [ ] Las reglas de negocio se probaron con los casos de la sección 16, verificadas por el integrante que no es el autor.
 - [ ] El Pull Request fue revisado y fusionado en `develop`.
 - [ ] El diagrama UML está actualizado.
 - [ ] El Product Owner aceptó la historia en la Sprint Review.
