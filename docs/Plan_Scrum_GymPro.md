@@ -678,7 +678,7 @@ Para agregar la línea real, añadir debajo de la línea ideal otra fila `line [
 |---|---|---|---|---|
 | S1 | 18 | | | |
 | S2 | 19 | 19 | 19 | PO ausente en la review; aceptación por SM y QA ([acta](actas/Sprint2_Review.md)) |
-| S3 | 19 | | | |
+| S3 | 19 | 19 | 19 | Aceptación provisional del SM (PO y QA ausentes); tareas de I1 e I3 redistribuidas a I2 por el plan B ([acta](actas/Sprint3_Review.md)) |
 | S4 | 19 | | | |
 | S5 | 19 | | | |
 
