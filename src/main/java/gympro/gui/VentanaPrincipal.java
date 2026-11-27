@@ -70,17 +70,30 @@ public final class VentanaPrincipal extends JFrame
 
     private final transient Gimnasio gimnasio;
     private final transient Usuario usuario;
+    /** Qué hacer al cerrar sesión (por ejemplo, volver al login); {@code null} oculta la opción. */
+    private final transient Runnable alCerrarSesion;
     private final JTabbedPane pestanas = new JTabbedPane();
     private final JLabel lblMensaje = new JLabel(MENSAJE_INICIAL);
     private final JLabel lblReloj = new JLabel();
     private final Timer reloj = new Timer(1000, e -> actualizarReloj());
     private final Timer limpiarMensaje = new Timer(DURACION_MENSAJE_MS, e -> lblMensaje.setText(MENSAJE_INICIAL));
 
+    /** Ventana sin la opción «Cerrar sesión». */
     public VentanaPrincipal(Gimnasio gimnasio, Usuario usuario)
+    {
+        this(gimnasio, usuario, null);
+    }
+
+    /**
+     * @param alCerrarSesion se ejecuta después de cerrar la ventana con Archivo → Cerrar sesión
+     *                       (por ejemplo, abrir de nuevo el login); {@code null} oculta la opción
+     */
+    public VentanaPrincipal(Gimnasio gimnasio, Usuario usuario, Runnable alCerrarSesion)
     {
         super(gimnasio.getNombre() + " - " + usuario.getUsername() + " (" + usuario.getRol() + ")");
         this.gimnasio = gimnasio;
         this.usuario = usuario;
+        this.alCerrarSesion = alCerrarSesion;
 
         setJMenuBar(crearMenu());
         crearPestanas();
@@ -150,6 +163,17 @@ public final class VentanaPrincipal extends JFrame
                 archivo.add(opcionPendiente(opcion, "Sprint 4"));
             }
             archivo.addSeparator();
+        }
+        if (alCerrarSesion != null)
+        {
+            JMenuItem cerrarSesion = new JMenuItem("Cerrar sesión");
+            cerrarSesion.setMnemonic(KeyEvent.VK_C);
+            cerrarSesion.addActionListener(e ->
+            {
+                dispose();
+                alCerrarSesion.run();
+            });
+            archivo.add(cerrarSesion);
         }
         JMenuItem salir = new JMenuItem("Salir");
         salir.setMnemonic(KeyEvent.VK_S);
