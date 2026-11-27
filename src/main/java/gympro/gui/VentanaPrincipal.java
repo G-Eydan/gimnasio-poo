@@ -188,7 +188,7 @@ public final class VentanaPrincipal extends JFrame
             bd.setMnemonic(KeyEvent.VK_B);
             for (String opcion : new String[]{"Conectar", "Sincronizar (guardar todo)", "Cargar"})
             {
-                bd.add(opcionPendiente(opcion, "Sprint 5"));
+                bd.add(opcionPendiente(opcion, "Sprint 4"));
             }
             barra.add(bd);
         }
