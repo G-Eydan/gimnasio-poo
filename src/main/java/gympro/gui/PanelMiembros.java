@@ -60,6 +60,7 @@ public final class PanelMiembros extends JPanel implements Actualizable
 {
     private static final long serialVersionUID = 1L;
     private static final String TODOS = "Todos";
+    private static final String DADOS_DE_BAJA = "Dados de baja";
     private static final DateTimeFormatter FORMATO_FECHA = MiembroTableModel.FORMATO_FECHA;
 
     private final transient Gimnasio gimnasio;
@@ -147,6 +148,7 @@ public final class PanelMiembros extends JPanel implements Actualizable
         {
             cboEstado.addItem(estado);
         }
+        cboEstado.addItem(DADOS_DE_BAJA);
         cboEstado.addActionListener(e -> filtrar());
 
         txtBuscar.setToolTipText("Escriba parte del DNI o del nombre");
@@ -214,15 +216,22 @@ public final class PanelMiembros extends JPanel implements Actualizable
                     MiembroTableModel.COL_DNI, MiembroTableModel.COL_NOMBRE));
         }
 
+        // «Todos» muestra también a los dados de baja; cada estado muestra solo a los activos
+        // con ese estado, y «Dados de baja» solo a los inactivos (decisión D6).
         Object estado = cboEstado.getSelectedItem();
-        if (estado instanceof EstadoInscripcion)
+        if (!TODOS.equals(estado))
         {
             filtros.add(new RowFilter<MiembroTableModel, Integer>()
             {
                 @Override
                 public boolean include(Entry<? extends MiembroTableModel, ? extends Integer> fila)
                 {
-                    return fila.getValue(MiembroTableModel.COL_ESTADO) == estado;
+                    boolean activo = fila.getModel().getMiembro(fila.getIdentifier()).isActivo();
+                    if (DADOS_DE_BAJA.equals(estado))
+                    {
+                        return !activo;
+                    }
+                    return activo && fila.getValue(MiembroTableModel.COL_ESTADO) == estado;
                 }
             });
         }
@@ -375,7 +384,7 @@ public final class PanelMiembros extends JPanel implements Actualizable
         }
         sb.append(String.format("Teléfono    : %s%n", valor(m.getTelefono())));
         sb.append(String.format("Email       : %s%n", valor(m.getEmail())));
-        sb.append(String.format("Estado      : %s%n", m.getEstadoInscripcion()));
+        sb.append(String.format("Estado      : %s%s%n", m.getEstadoInscripcion(), m.isActivo() ? "" : " (DADO DE BAJA)"));
 
         Membresia vigente = m.getMembresiaVigente();
         if (vigente != null)
